@@ -50,6 +50,12 @@ export type CustomerPayment = {
   projectId: string;
   plotNumber: string;
   paymentType: PaymentType;
+  totalSalePrice: number;
+  perYardPrice: number;
+  villaPrice?: number;
+  clubhouseCharges?: number;
+  developmentCharges?: number;
+  totalPrice: number;
 };
 
 export type Expense = {
