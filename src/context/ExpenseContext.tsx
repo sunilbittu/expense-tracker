@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Expense, Project, Category, SubCategory, ExpenseContextType } from '../types';
+import { Expense, Project, Category, Income, ExpenseContextType } from '../types';
 import { defaultCategories, defaultProjects } from '../data/mockData';
 import toast from 'react-hot-toast';
 
@@ -20,6 +20,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [incomes, setIncomes] = useState<Income[]>(() => {
+    const saved = localStorage.getItem('incomes');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [projects, setProjects] = useState<Project[]>(() => {
     const saved = localStorage.getItem('projects');
     return saved ? JSON.parse(saved) : defaultProjects;
@@ -33,6 +38,10 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
   }, [expenses]);
+
+  useEffect(() => {
+    localStorage.setItem('incomes', JSON.stringify(incomes));
+  }, [incomes]);
 
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
@@ -68,6 +77,38 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const deleteExpense = (id: string) => {
     setExpenses(expenses.filter((expense) => expense.id !== id));
     toast.success('Expense deleted successfully');
+  };
+
+  const addIncome = (income: Omit<Income, 'id' | 'createdAt'>) => {
+    const newIncome = {
+      ...income,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+    };
+    setIncomes([...incomes, newIncome]);
+    toast.success('Income added successfully');
+  };
+
+  const updateIncome = (id: string, income: Omit<Income, 'id' | 'createdAt'>) => {
+    const updatedIncomes = incomes.map((inc) =>
+      inc.id === id
+        ? {
+            ...inc,
+            ...income,
+          }
+        : inc
+    );
+    setIncomes(updatedIncomes);
+    toast.success('Income updated successfully');
+  };
+
+  const deleteIncome = (id: string) => {
+    setIncomes(incomes.filter((income) => income.id !== id));
+    toast.success('Income deleted successfully');
+  };
+
+  const getIncomeById = (id: string) => {
+    return incomes.find((income) => income.id === id);
   };
 
   const addProject = (project: Omit<Project, 'id'>) => {
@@ -122,11 +163,16 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     <ExpenseContext.Provider
       value={{
         expenses,
+        incomes,
         projects,
         categories,
         addExpense,
         updateExpense,
         deleteExpense,
+        addIncome,
+        updateIncome,
+        deleteIncome,
+        getIncomeById,
         addProject,
         updateProject,
         deleteProject,

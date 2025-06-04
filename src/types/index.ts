@@ -25,15 +25,13 @@ export type Income = {
   id: string;
   amount: number;
   date: string;
-  category: string;
   description: string;
   createdAt: string;
   paymentMode: PaymentMode;
   chequeNumber?: string;
   transactionId?: string;
   source: string;
-  recurring: boolean;
-  frequency?: 'monthly' | 'quarterly' | 'yearly';
+  payee: string;
 };
 
 export type Expense = {
@@ -61,6 +59,7 @@ export type ExpenseContextType = {
   addIncome: (income: Omit<Income, 'id' | 'createdAt'>) => void;
   updateIncome: (id: string, income: Omit<Income, 'id' | 'createdAt'>) => void;
   deleteIncome: (id: string) => void;
+  getIncomeById: (id: string) => Income | undefined;
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (id: string, project: Omit<Project, 'id'>) => void;
   deleteProject: (id: string) => void;
@@ -69,7 +68,7 @@ export type ExpenseContextType = {
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'projects' | 'add' | 'edit';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'projects' | 'add' | 'add-income' | 'edit' | 'edit-income';
 
 export type FilterOptions = {
   project: string;
