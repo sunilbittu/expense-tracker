@@ -8,6 +8,7 @@ const CustomerPaymentForm = () => {
     amount: '',
     paymentDate: '',
     paymentMethod: 'credit_card',
+    plotNumber: '',
     description: ''
   });
 
@@ -25,6 +26,7 @@ const CustomerPaymentForm = () => {
       amount: '',
       paymentDate: '',
       paymentMethod: 'credit_card',
+      plotNumber: '',
       description: ''
     });
   };
@@ -50,6 +52,22 @@ const CustomerPaymentForm = () => {
           value={formData.customerName}
           onChange={handleChange}
           required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="plotNumber" className="block text-sm font-medium text-gray-700">
+          Plot Number
+        </label>
+        <input
+          type="text"
+          id="plotNumber"
+          name="plotNumber"
+          value={formData.plotNumber}
+          onChange={handleChange}
+          required
+          placeholder="Enter plot number"
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         />
       </div>
