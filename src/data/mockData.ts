@@ -11,7 +11,13 @@ import {
   GraduationCap, 
   Plane,
   Building2,
-  Construction
+  Construction,
+  DollarSign,
+  Landmark,
+  Building,
+  Users,
+  Gift,
+  Coins
 } from 'lucide-react';
 
 export const defaultCategories: Category[] = [
@@ -65,6 +71,42 @@ export const defaultCategories: Category[] = [
   }
 ];
 
+export const incomeCategories = [
+  {
+    id: 'business',
+    name: 'Business Income',
+    icon: 'Building',
+    subcategories: [
+      { id: 'sales', name: 'Sales Revenue', icon: 'DollarSign' },
+      { id: 'services', name: 'Service Fees', icon: 'Briefcase' },
+      { id: 'consulting', name: 'Consulting', icon: 'Users' },
+      { id: 'commission', name: 'Commission', icon: 'Coins' }
+    ]
+  },
+  {
+    id: 'investments',
+    name: 'Investment Income',
+    icon: 'Landmark',
+    subcategories: [
+      { id: 'dividends', name: 'Dividends', icon: 'DollarSign' },
+      { id: 'interest', name: 'Interest', icon: 'Coins' },
+      { id: 'rental', name: 'Rental Income', icon: 'Home' },
+      { id: 'capital-gains', name: 'Capital Gains', icon: 'TrendingUp' }
+    ]
+  },
+  {
+    id: 'other',
+    name: 'Other Income',
+    icon: 'Gift',
+    subcategories: [
+      { id: 'salary', name: 'Salary', icon: 'Briefcase' },
+      { id: 'bonus', name: 'Bonus', icon: 'Gift' },
+      { id: 'gifts', name: 'Gifts Received', icon: 'Gift' },
+      { id: 'misc', name: 'Miscellaneous', icon: 'DollarSign' }
+    ]
+  }
+];
+
 export const defaultProjects: Project[] = [
   { id: '1', name: 'Personal', color: '#3B82F6' },
   { id: '2', name: 'Work', color: '#10B981' },
@@ -83,5 +125,11 @@ export const categoryIcons: Record<string, React.ElementType> = {
   GraduationCap,
   Plane,
   Building2,
-  Construction
+  Construction,
+  DollarSign,
+  Landmark,
+  Building,
+  Users,
+  Gift,
+  Coins
 };
