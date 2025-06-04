@@ -1,0 +1,55 @@
+export type Project = {
+  id: string;
+  name: string;
+  color: string;
+};
+
+export type SubCategory = {
+  id: string;
+  name: string;
+  icon: string;
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  icon: string;
+  subcategories: SubCategory[];
+};
+
+export type Expense = {
+  id: string;
+  projectId: string;
+  amount: number;
+  date: string;
+  category: string;
+  subcategory: string;
+  description: string;
+  createdAt: string;
+};
+
+export type ExpenseContextType = {
+  expenses: Expense[];
+  projects: Project[];
+  categories: Category[];
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
+  updateExpense: (id: string, expense: Omit<Expense, 'id' | 'createdAt'>) => void;
+  deleteExpense: (id: string) => void;
+  addProject: (project: Omit<Project, 'id'>) => void;
+  updateProject: (id: string, project: Omit<Project, 'id'>) => void;
+  deleteProject: (id: string) => void;
+  getProjectById: (id: string) => Project | undefined;
+  getCategoryById: (id: string) => Category | undefined;
+  getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
+};
+
+export type ActiveView = 'dashboard' | 'expenses' | 'projects' | 'add' | 'edit';
+
+export type FilterOptions = {
+  project: string;
+  category: string;
+  subcategory: string;
+  startDate: string;
+  endDate: string;
+  searchQuery: string;
+};

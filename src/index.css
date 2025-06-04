@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media print {
+  /* Hide non-printable elements */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Reset background colors and shadows for better printing */
+  .print-reset {
+    background-color: white !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Ensure table fits on page */
+  .print-table {
+    width: 100% !important;
+    page-break-inside: auto !important;
+  }
+  
+  .print-table tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+  
+  /* Add page margins */
+  @page {
+    margin: 2cm;
+  }
+}
