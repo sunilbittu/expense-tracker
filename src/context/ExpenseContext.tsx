@@ -159,28 +159,28 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return category?.subcategories.find((subcategory) => subcategory.id === subcategoryId);
   };
 
+  const value: ExpenseContextType = {
+    expenses,
+    incomes,
+    projects,
+    categories,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+    addIncome,
+    updateIncome,
+    deleteIncome,
+    getIncomeById,
+    addProject,
+    updateProject,
+    deleteProject,
+    getProjectById,
+    getCategoryById,
+    getSubCategoryById,
+  };
+
   return (
-    <ExpenseContext.Provider
-      value={{
-        expenses,
-        incomes,
-        projects,
-        categories,
-        addExpense,
-        updateExpense,
-        deleteExpense,
-        addIncome,
-        updateIncome,
-        deleteIncome,
-        getIncomeById,
-        addProject,
-        updateProject,
-        deleteProject,
-        getProjectById,
-        getCategoryById,
-        getSubCategoryById,
-      }}
-    >
+    <ExpenseContext.Provider value={value}>
       {children}
     </ExpenseContext.Provider>
   );
