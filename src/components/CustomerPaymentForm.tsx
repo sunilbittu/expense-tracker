@@ -1,22 +1,34 @@
 import React, { useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
+import { PaymentCategory } from '../types';
+import { ArrowLeft, Building2, Users, Receipt } from 'lucide-react';
 
 const CustomerPaymentForm = () => {
-  const { addExpense } = useExpenses();
+  const { addCustomerPayment } = useExpenses();
   const [formData, setFormData] = useState({
     customerName: '',
     amount: '',
     paymentDate: '',
     paymentMethod: 'credit_card',
     plotNumber: '',
-    description: ''
+    description: '',
+    paymentCategory: 'token' as PaymentCategory,
+    totalPrice: '',
+    developmentCharges: '',
+    clubhouseCharges: '',
+    constructionCharges: '',
+    projectId: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addExpense({
+    addCustomerPayment({
       ...formData,
       amount: parseFloat(formData.amount),
+      totalPrice: parseFloat(formData.totalPrice),
+      developmentCharges: parseFloat(formData.developmentCharges),
+      clubhouseCharges: parseFloat(formData.clubhouseCharges),
+      constructionCharges: parseFloat(formData.constructionCharges),
       type: 'payment',
       id: Date.now().toString(),
       date: formData.paymentDate
@@ -27,7 +39,13 @@ const CustomerPaymentForm = () => {
       paymentDate: '',
       paymentMethod: 'credit_card',
       plotNumber: '',
-      description: ''
+      description: '',
+      paymentCategory: 'token',
+      totalPrice: '',
+      developmentCharges: '',
+      clubhouseCharges: '',
+      constructionCharges: '',
+      projectId: '',
     });
   };
 
@@ -38,6 +56,16 @@ const CustomerPaymentForm = () => {
       [name]: value
     }));
   };
+
+  const paymentCategories = [
+    { id: 'token', name: 'Token Amount' },
+    { id: 'advance', name: 'Advance Payment' },
+    { id: 'booking', name: 'Booking Payment' },
+    { id: 'construction', name: 'Construction Payment' },
+    { id: 'development', name: 'Development Charges' },
+    { id: 'clubhouse', name: 'Clubhouse Charges' },
+    { id: 'final', name: 'Final Payment' },
+  ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
@@ -73,14 +101,102 @@ const CustomerPaymentForm = () => {
       </div>
 
       <div>
+        <label htmlFor="paymentCategory" className="block text-sm font-medium text-gray-700">
+          Payment Category
+        </label>
+        <select
+          id="paymentCategory"
+          name="paymentCategory"
+          value={formData.paymentCategory}
+          onChange={handleChange}
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        >
+          {paymentCategories.map(category => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="totalPrice" className="block text-sm font-medium text-gray-700">
+          Total Price
+        </label>
+        <input
+          type="number"
+          id="totalPrice"
+          name="totalPrice"
+          value={formData.totalPrice}
+          onChange={handleChange}
+          required
+          min="0"
+          step="0.01"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
         <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-          Amount
+          Payment Amount
         </label>
         <input
           type="number"
           id="amount"
           name="amount"
           value={formData.amount}
+          onChange={handleChange}
+          required
+          min="0"
+          step="0.01"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="developmentCharges" className="block text-sm font-medium text-gray-700">
+          Development Charges
+        </label>
+        <input
+          type="number"
+          id="developmentCharges"
+          name="developmentCharges"
+          value={formData.developmentCharges}
+          onChange={handleChange}
+          required
+          min="0"
+          step="0.01"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="clubhouseCharges" className="block text-sm font-medium text-gray-700">
+          Clubhouse Charges
+        </label>
+        <input
+          type="number"
+          id="clubhouseCharges"
+          name="clubhouseCharges"
+          value={formData.clubhouseCharges}
+          onChange={handleChange}
+          required
+          min="0"
+          step="0.01"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="constructionCharges" className="block text-sm font-medium text-gray-700">
+          Construction Charges
+        </label>
+        <input
+          type="number"
+          id="constructionCharges"
+          name="constructionCharges"
+          value={formData.constructionCharges}
           onChange={handleChange}
           required
           min="0"

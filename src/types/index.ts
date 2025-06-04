@@ -1,3 +1,5 @@
+import { IconName } from 'lucide-react';
+
 export type Project = {
   id: string;
   name: string;
@@ -34,7 +36,7 @@ export type Income = {
   payee: string;
 };
 
-export type PaymentType = 'token' | 'advance' | 'booking' | 'construction';
+export type PaymentCategory = 'token' | 'advance' | 'booking' | 'construction' | 'development' | 'clubhouse' | 'final';
 
 export type CustomerPayment = {
   id: string;
@@ -49,13 +51,11 @@ export type CustomerPayment = {
   invoiceNumber?: string;
   projectId: string;
   plotNumber: string;
-  paymentType: PaymentType;
-  totalSalePrice: number;
-  perYardPrice: number;
-  villaPrice?: number;
-  clubhouseCharges?: number;
-  developmentCharges?: number;
+  paymentCategory: PaymentCategory;
   totalPrice: number;
+  developmentCharges: number;
+  clubhouseCharges: number;
+  constructionCharges: number;
 };
 
 export type Expense = {
@@ -107,4 +107,5 @@ export type FilterOptions = {
   endDate: string;
   searchQuery: string;
   paymentMode?: PaymentMode;
+  paymentCategory?: PaymentCategory;
 };
