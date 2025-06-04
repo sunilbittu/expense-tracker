@@ -11,7 +11,7 @@ interface ExpenseFormProps {
 }
 
 const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
-  const { addExpense, updateExpense, expenses, projects, categories } = useExpenses();
+  const { addExpense, updateExpense, expenses, projects = [], categories = [] } = useExpenses();
   
   const [formData, setFormData] = useState<Omit<Expense, 'id' | 'createdAt'>>({
     projectId: projects[0]?.id || '',
@@ -27,7 +27,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
   
   useEffect(() => {
     if (expenseId) {
-      const expense = expenses.find((e) => e.id === expenseId);
+      const expense = expenses?.find((e) => e.id === expenseId);
       if (expense) {
         setFormData({
           projectId: expense.projectId,
@@ -151,7 +151,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                 <option value="" disabled>
                   Select a project
                 </option>
-                {projects.map((project) => (
+                {(projects || []).map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
                   </option>
@@ -219,7 +219,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                 Category
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {categories.map((category) => {
+                {(categories || []).map((category) => {
                   const Icon = categoryIcons[category.icon];
                   return (
                     <div
@@ -228,7 +228,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                         setFormData({
                           ...formData,
                           category: category.id,
-                          subcategory: category.subcategories[0]?.id || '',
+                          subcategory: category.subcategories?.[0]?.id || '',
                         });
                       }}
                       className={`cursor-pointer flex items-center p-4 rounded-lg transition-colors ${
@@ -257,7 +257,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                   Subcategory
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {selectedCategory.subcategories.map((subcategory) => {
+                  {(selectedCategory.subcategories || []).map((subcategory) => {
                     const Icon = categoryIcons[subcategory.icon];
                     return (
                       <div
