@@ -34,6 +34,8 @@ export type Income = {
   payee: string;
 };
 
+export type PaymentType = 'token' | 'advance' | 'booking' | 'construction';
+
 export type CustomerPayment = {
   id: string;
   amount: number;
@@ -46,6 +48,8 @@ export type CustomerPayment = {
   customerName: string;
   invoiceNumber?: string;
   projectId: string;
+  plotNumber: string;
+  paymentType: PaymentType;
 };
 
 export type Expense = {
