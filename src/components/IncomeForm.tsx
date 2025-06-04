@@ -16,7 +16,7 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
     description: '',
     date: new Date().toISOString().split('T')[0],
     source: '',
-    payer: '',
+    payee: '',
     paymentMode: 'cash' as PaymentMode,
     chequeNumber: '',
     transactionId: '',
@@ -33,7 +33,7 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
           description: income.description,
           date: new Date(income.date).toISOString().split('T')[0],
           source: income.source,
-          payer: income.payer || '',
+          payee: income.payee || '',
           paymentMode: income.paymentMode,
           chequeNumber: income.chequeNumber || '',
           transactionId: income.transactionId || '',
@@ -57,8 +57,8 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
       newErrors.source = 'Source is required';
     }
 
-    if (!formData.payer.trim()) {
-      newErrors.payer = 'Payer name is required';
+    if (!formData.payee.trim()) {
+      newErrors.payee = 'Payee name is required';
     }
 
     if (formData.paymentMode === 'cheque' && !formData.chequeNumber?.trim()) {
@@ -85,7 +85,7 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
       description: formData.description,
       date: new Date(formData.date).toISOString(),
       source: formData.source,
-      payer: formData.payer,
+      payee: formData.payee,
       paymentMode: formData.paymentMode,
       chequeNumber: formData.paymentMode === 'cheque' ? formData.chequeNumber : undefined,
       transactionId: formData.paymentMode === 'online' ? formData.transactionId : undefined,
@@ -188,20 +188,20 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Payer Name
+              Payee Name
             </label>
             <input
               type="text"
-              name="payer"
-              value={formData.payer}
+              name="payee"
+              value={formData.payee}
               onChange={handleChange}
               placeholder="Enter the name of the person or organization"
               className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.payer ? 'border-red-500' : 'border-gray-300'
+                errors.payee ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.payer && (
-              <p className="mt-1 text-sm text-red-500">{errors.payer}</p>
+            {errors.payee && (
+              <p className="mt-1 text-sm text-red-500">{errors.payee}</p>
             )}
           </div>
 
