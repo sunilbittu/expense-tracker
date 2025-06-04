@@ -7,7 +7,10 @@ import {
   Trash2, 
   ChevronLeft, 
   ChevronRight,
-  Users
+  Users,
+  Building,
+  DollarSign,
+  Receipt
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { FilterOptions } from '../types';
@@ -140,6 +143,57 @@ const CustomerPaymentList: React.FC<CustomerPaymentListProps> = ({ onEditPayment
           <p className="text-gray-600">Manage customer payments and track balances</p>
         </div>
       </header>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <h3 className="text-gray-500 text-sm font-medium">Total Payments</h3>
+            <span className="p-2 bg-green-100 rounded-lg">
+              <DollarSign size={18} className="text-green-600" />
+            </span>
+          </div>
+          <p className="mt-2 text-2xl font-bold text-gray-800">
+            {formatCurrency(customerPayments.reduce((sum, p) => sum + p.amount, 0))}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <h3 className="text-gray-500 text-sm font-medium">Total Customers</h3>
+            <span className="p-2 bg-purple-100 rounded-lg">
+              <Users size={18} className="text-purple-600" />
+            </span>
+          </div>
+          <p className="mt-2 text-2xl font-bold text-gray-800">
+            {new Set(customerPayments.map(p => p.customerName)).size}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <h3 className="text-gray-500 text-sm font-medium">Active Projects</h3>
+            <span className="p-2 bg-blue-100 rounded-lg">
+              <Building size={18} className="text-blue-600" />
+            </span>
+          </div>
+          <p className="mt-2 text-2xl font-bold text-gray-800">
+            {new Set(customerPayments.map(p => p.projectId)).size}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <h3 className="text-gray-500 text-sm font-medium">Total Invoices</h3>
+            <span className="p-2 bg-orange-100 rounded-lg">
+              <Receipt size={18} className="text-orange-600" />
+            </span>
+          </div>
+          <p className="mt-2 text-2xl font-bold text-gray-800">
+            {customerPayments.filter(p => p.invoiceNumber).length}
+          </p>
+        </div>
+      </div>
       
       {/* Search and Filter Bar */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
