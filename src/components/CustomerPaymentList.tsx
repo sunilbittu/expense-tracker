@@ -252,10 +252,13 @@ const CustomerPaymentList: React.FC<CustomerPaymentListProps> = ({ onEditPayment
                       Project
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Invoice
+                      Plot No.
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
+                      Payment Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Invoice
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Amount
@@ -295,11 +298,24 @@ const CustomerPaymentList: React.FC<CustomerPaymentListProps> = ({ onEditPayment
                           </span>
                         </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {payment.plotNumber}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          payment.paymentType === 'token' ? 'bg-purple-100 text-purple-800' :
+                          payment.paymentType === 'booking' ? 'bg-blue-100 text-blue-800' :
+                          payment.paymentType === 'advance' ? 'bg-green-100 text-green-800' :
+                          'bg-orange-100 text-orange-800'
+                        }`}>
+                          {payment.paymentType === 'token' ? 'Token Amount' :
+                           payment.paymentType === 'booking' ? 'Booking Amount' :
+                           payment.paymentType === 'advance' ? 'Advance Payment' :
+                           'Construction Payment'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {payment.invoiceNumber || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {payment.description}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600">
                         {formatCurrency(payment.amount)}
