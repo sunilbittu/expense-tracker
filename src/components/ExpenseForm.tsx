@@ -14,11 +14,11 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
   const { addExpense, updateExpense, expenses, projects, categories } = useExpenses();
   
   const [formData, setFormData] = useState<Omit<Expense, 'id' | 'createdAt'>>({
-    projectId: projects?.[0]?.id || '',
+    projectId: projects[0]?.id || '',
     amount: 0,
     date: format(new Date(), 'yyyy-MM-dd'),
-    category: categories?.[0]?.id || '',
-    subcategory: categories?.[0]?.subcategories?.[0]?.id || '',
+    category: categories[0]?.id || '',
+    subcategory: categories[0]?.subcategories?.[0]?.id || '',
     description: '',
   });
   
@@ -27,7 +27,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
   
   useEffect(() => {
     if (expenseId) {
-      const expense = expenses?.find((e) => e.id === expenseId);
+      const expense = expenses.find((e) => e.id === expenseId);
       if (expense) {
         setFormData({
           projectId: expense.projectId,
@@ -59,7 +59,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    
+
     if (!formData.subcategory) {
       newErrors.subcategory = 'Subcategory is required';
     }
@@ -94,12 +94,11 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
     const { name, value } = e.target;
     
     if (name === 'category') {
-      // When category changes, reset subcategory to first available option
-      const category = categories?.find(c => c.id === value);
+      const selectedCategory = categories.find(c => c.id === value);
       setFormData({
         ...formData,
         category: value,
-        subcategory: category?.subcategories?.[0]?.id || '',
+        subcategory: selectedCategory?.subcategories?.[0]?.id || '',
       });
     } else {
       setFormData({
@@ -108,7 +107,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
       });
     }
     
-    // Clear error when user types
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -117,7 +115,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
     }
   };
 
-  const selectedCategory = categories?.find(c => c.id === formData.category);
+  const selectedCategory = categories.find(c => c.id === formData.category);
   
   return (
     <div className="max-w-2xl mx-auto">
@@ -153,7 +151,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                 <option value="" disabled>
                   Select a project
                 </option>
-                {projects?.map((project) => (
+                {projects.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
                   </option>
@@ -220,8 +218,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Category
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                {categories?.map((category) => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {categories.map((category) => {
                   const Icon = categoryIcons[category.icon];
                   return (
                     <div
@@ -230,17 +228,17 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                         setFormData({
                           ...formData,
                           category: category.id,
-                          subcategory: category.subcategories?.[0]?.id || '',
+                          subcategory: category.subcategories[0]?.id || '',
                         });
                       }}
-                      className={`cursor-pointer flex flex-col items-center p-3 rounded-lg transition-colors ${
+                      className={`cursor-pointer flex items-center p-4 rounded-lg transition-colors ${
                         formData.category === category.id
                           ? 'bg-blue-100 border-2 border-blue-500'
                           : 'bg-white border border-gray-300 hover:bg-gray-50'
                       }`}
                     >
-                      {Icon && <Icon size={20} className={formData.category === category.id ? 'text-blue-600' : 'text-gray-600'} />}
-                      <span className={`mt-1 text-sm ${formData.category === category.id ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
+                      {Icon && <Icon size={24} className={`${formData.category === category.id ? 'text-blue-600' : 'text-gray-600'} mr-3`} />}
+                      <span className={`text-lg ${formData.category === category.id ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
                         {category.name}
                       </span>
                     </div>
@@ -253,12 +251,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
             </div>
             
             {/* Subcategory */}
-            {selectedCategory?.subcategories?.length > 0 && (
+            {selectedCategory && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Subcategory
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {selectedCategory.subcategories.map((subcategory) => {
                     const Icon = categoryIcons[subcategory.icon];
                     return (
@@ -271,7 +269,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                             : 'bg-white border border-gray-300 hover:bg-gray-50'
                         }`}
                       >
-                        {Icon && <Icon size={16} className={formData.subcategory === subcategory.id ? 'text-blue-600 mr-2' : 'text-gray-600 mr-2'} />}
+                        {Icon && <Icon size={16} className={`${formData.subcategory === subcategory.id ? 'text-blue-600' : 'text-gray-600'} mr-2`} />}
                         <span className={`text-sm ${formData.subcategory === subcategory.id ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
                           {subcategory.name}
                         </span>
