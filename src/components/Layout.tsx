@@ -2,19 +2,27 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Dashboard from './Dashboard';
 import ExpenseList from './ExpenseList';
+import IncomeList from './IncomeList';
 import ProjectList from './ProjectList';
 import ExpenseForm from './ExpenseForm';
+import IncomeForm from './IncomeForm';
 import { ActiveView } from '../types';
 import { Menu, X } from 'lucide-react';
 
 const Layout: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [editExpenseId, setEditExpenseId] = useState<string | null>(null);
+  const [editIncomeId, setEditIncomeId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleEditExpense = (id: string) => {
     setEditExpenseId(id);
     setActiveView('edit');
+  };
+
+  const handleEditIncome = (id: string) => {
+    setEditIncomeId(id);
+    setActiveView('edit-income');
   };
 
   const renderActiveView = () => {
@@ -23,15 +31,26 @@ const Layout: React.FC = () => {
         return <Dashboard />;
       case 'expenses':
         return <ExpenseList onEditExpense={handleEditExpense} />;
+      case 'income':
+        return <IncomeList onEditIncome={handleEditIncome} />;
       case 'projects':
         return <ProjectList />;
       case 'add':
         return <ExpenseForm onComplete={() => setActiveView('expenses')} />;
+      case 'add-income':
+        return <IncomeForm onComplete={() => setActiveView('income')} />;
       case 'edit':
         return (
           <ExpenseForm
             expenseId={editExpenseId}
             onComplete={() => setActiveView('expenses')}
+          />
+        );
+      case 'edit-income':
+        return (
+          <IncomeForm
+            incomeId={editIncomeId}
+            onComplete={() => setActiveView('income')}
           />
         );
       default:
