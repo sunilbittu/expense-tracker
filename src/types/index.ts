@@ -17,6 +17,8 @@ export type Category = {
   subcategories: SubCategory[];
 };
 
+export type PaymentMode = 'cash' | 'online' | 'cheque';
+
 export type Expense = {
   id: string;
   projectId: string;
@@ -26,6 +28,9 @@ export type Expense = {
   subcategory: string;
   description: string;
   createdAt: string;
+  paymentMode: PaymentMode;
+  chequeNumber?: string;
+  transactionId?: string;
 };
 
 export type ExpenseContextType = {
@@ -52,4 +57,5 @@ export type FilterOptions = {
   startDate: string;
   endDate: string;
   searchQuery: string;
+  paymentMode?: PaymentMode;
 };
