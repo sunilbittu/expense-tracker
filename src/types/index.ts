@@ -1,4 +1,4 @@
-import { IconName } from 'lucide-react';
+import { FlameIcon as IconName } from 'lucide-react';
 
 export type Project = {
   id: string;
