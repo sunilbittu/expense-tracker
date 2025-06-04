@@ -97,7 +97,7 @@ export type ExpenseContextType = {
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'add' | 'add-income' | 'add-customer-payment' | 'edit' | 'edit-income' | 'edit-customer-payment';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'add' | 'add-income' | 'add-customer-payment' | 'edit' | 'edit-income' | 'edit-customer-payment';
 
 export type FilterOptions = {
   project: string;

@@ -5,6 +5,7 @@ import ExpenseList from './ExpenseList';
 import IncomeList from './IncomeList';
 import CustomerPaymentList from './CustomerPaymentList';
 import ProjectList from './ProjectList';
+import Reports from './Reports';
 import ExpenseForm from './ExpenseForm';
 import IncomeForm from './IncomeForm';
 import CustomerPaymentForm from './CustomerPaymentForm';
@@ -45,6 +46,8 @@ const Layout: React.FC = () => {
         return <CustomerPaymentList onEditPayment={handleEditPayment} />;
       case 'projects':
         return <ProjectList />;
+      case 'reports':
+        return <Reports />;
       case 'add':
         return <ExpenseForm onComplete={() => setActiveView('expenses')} />;
       case 'add-income':

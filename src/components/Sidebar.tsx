@@ -6,7 +6,8 @@ import {
   PlusCircle,
   LogOut,
   DollarSign,
-  Users
+  Users,
+  FileSpreadsheet
 } from 'lucide-react';
 import { ActiveView } from '../types';
 
@@ -22,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
     { id: 'income', label: 'Income', icon: <DollarSign size={20} /> },
     { id: 'customer-payments', label: 'Customer Payments', icon: <Users size={20} /> },
     { id: 'projects', label: 'Projects', icon: <Briefcase size={20} /> },
+    { id: 'reports', label: 'Reports', icon: <FileSpreadsheet size={20} /> },
   ];
 
   return (
