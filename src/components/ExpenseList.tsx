@@ -145,7 +145,9 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
 
   const getSubcategoryName = (categoryId: string, subcategoryId: string) => {
     const category = categories.find((c) => c.id === categoryId);
-    const subcategory = category?.subcategories.find((s) => s.id === subcategoryId);
+    if (!category) return 'Unknown Category';
+    
+    const subcategory = category.subcategories?.find((s) => s.id === subcategoryId);
     return subcategory ? subcategory.name : 'Unknown Subcategory';
   };
   
@@ -242,7 +244,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
                     <option value="">All Subcategories</option>
                     {categories
                       .find(c => c.id === filters.category)
-                      ?.subcategories.map((subcategory) => (
+                      ?.subcategories?.map((subcategory) => (
                         <option key={subcategory.id} value={subcategory.id}>
                           {subcategory.name}
                         </option>
