@@ -7,67 +7,106 @@ import {
   DollarSign,
   Calendar,
   Briefcase,
-  Filter
+  Filter,
+  Users,
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, subMonths } from 'date-fns';
 import ExpenseSummaryChart from './ExpenseSummaryChart';
 import ExpenseCategoryChart from './ExpenseCategoryChart';
 
 const Dashboard: React.FC = () => {
-  const { expenses, projects, categories } = useExpenses();
+  const { expenses, incomes, customerPayments, projects, categories } = useExpenses();
   const [dateRange, setDateRange] = useState({
     startDate: format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'),
     endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
 
-  // Filter expenses by date range
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter((expense) => {
-      const expenseDate = parseISO(expense.date);
-      return isWithinInterval(expenseDate, {
-        start: parseISO(dateRange.startDate),
-        end: parseISO(dateRange.endDate),
+  // Filter transactions by date range
+  const filteredData = useMemo(() => {
+    const filterByDate = (items: any[]) => {
+      return items.filter((item) => {
+        const itemDate = parseISO(item.date);
+        return isWithinInterval(itemDate, {
+          start: parseISO(dateRange.startDate),
+          end: parseISO(dateRange.endDate),
+        });
       });
-    });
-  }, [expenses, dateRange]);
+    };
 
-  // Total expenses for selected period
-  const totalExpenses = useMemo(() => {
-    return filteredExpenses.reduce((acc, expense) => acc + expense.amount, 0);
-  }, [filteredExpenses]);
+    return {
+      expenses: filterByDate(expenses),
+      incomes: filterByDate(incomes),
+      customerPayments: filterByDate(customerPayments)
+    };
+  }, [expenses, incomes, customerPayments, dateRange]);
 
-  // Last 5 expenses
-  const recentExpenses = useMemo(() => {
-    return [...expenses]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 5);
-  }, [expenses]);
+  // Calculate totals
+  const totals = useMemo(() => {
+    const expenseTotal = filteredData.expenses.reduce((acc, expense) => acc + expense.amount, 0);
+    const incomeTotal = filteredData.incomes.reduce((acc, income) => acc + income.amount, 0);
+    const paymentsTotal = filteredData.customerPayments.reduce((acc, payment) => acc + payment.amount, 0);
+    const totalReceived = incomeTotal + paymentsTotal;
+    const netBalance = totalReceived - expenseTotal;
 
-  // Highest expense in selected period
-  const highestExpense = useMemo(() => {
-    if (filteredExpenses.length === 0) return null;
-    return filteredExpenses.reduce((max, expense) => 
-      expense.amount > max.amount ? expense : max, 
-      filteredExpenses[0]);
-  }, [filteredExpenses]);
+    return {
+      expenses: expenseTotal,
+      incomes: incomeTotal,
+      payments: paymentsTotal,
+      totalReceived,
+      netBalance
+    };
+  }, [filteredData]);
 
-  // Get project by ID
-  const getProjectName = (id: string) => {
-    const project = projects.find((p) => p.id === id);
-    return project ? project.name : 'Unknown Project';
-  };
+  // Recent transactions (combined and sorted)
+  const recentTransactions = useMemo(() => {
+    const allTransactions = [
+      ...expenses.map(e => ({
+        ...e,
+        type: 'expense' as const,
+        title: e.description,
+        amount: -e.amount
+      })),
+      ...incomes.map(i => ({
+        ...i,
+        type: 'income' as const,
+        title: i.description,
+        projectId: ''
+      })),
+      ...customerPayments.map(p => ({
+        ...p,
+        type: 'payment' as const,
+        title: `Payment from ${p.customerName}`
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
 
-  // Get category by ID
-  const getCategoryName = (id: string) => {
-    const category = categories.find((c) => c.id === id);
-    return category ? category.name : 'Uncategorized';
-  };
+    return allTransactions;
+  }, [expenses, incomes, customerPayments]);
+
+  // Customer payment statistics
+  const paymentStats = useMemo(() => {
+    const totalDue = customerPayments.reduce((acc, payment) => acc + payment.totalPrice, 0);
+    const totalReceived = customerPayments.reduce((acc, payment) => acc + payment.amount, 0);
+    const totalPending = totalDue - totalReceived;
+    const uniqueCustomers = new Set(customerPayments.map(p => p.customerName)).size;
+
+    return {
+      totalDue,
+      totalReceived,
+      totalPending,
+      uniqueCustomers
+    };
+  }, [customerPayments]);
 
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
+      signDisplay: 'auto'
     }).format(amount);
   };
 
@@ -79,13 +118,19 @@ const Dashboard: React.FC = () => {
     }));
   };
 
+  // Get project name
+  const getProjectName = (id: string) => {
+    const project = projects.find((p) => p.id === id);
+    return project ? project.name : 'N/A';
+  };
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-gray-600">
-            Overview of your expenses
+            Financial overview and analytics
           </p>
         </div>
         
@@ -119,56 +164,99 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
-            <h3 className="text-gray-500 text-sm font-medium">Total Expenses</h3>
-            <span className="p-2 bg-blue-100 rounded-lg">
-              <DollarSign size={18} className="text-blue-600" />
+            <h3 className="text-gray-500 text-sm font-medium">Net Balance</h3>
+            <span className={`p-2 rounded-lg ${totals.netBalance >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+              {totals.netBalance >= 0 ? (
+                <ArrowUpRight size={18} className="text-green-600" />
+              ) : (
+                <ArrowDownRight size={18} className="text-red-600" />
+              )}
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-800">{formatCurrency(totalExpenses)}</p>
+          <p className={`mt-2 text-2xl font-bold ${totals.netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {formatCurrency(totals.netBalance)}
+          </p>
           <p className="mt-1 text-sm text-gray-500">
-            {format(parseISO(dateRange.startDate), 'MMM dd, yyyy')} - {format(parseISO(dateRange.endDate), 'MMM dd, yyyy')}
+            Total income minus expenses
           </p>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
-            <h3 className="text-gray-500 text-sm font-medium">Highest Expense</h3>
-            <span className="p-2 bg-red-100 rounded-lg">
-              <TrendingUp size={18} className="text-red-600" />
+            <h3 className="text-gray-500 text-sm font-medium">Total Income</h3>
+            <span className="p-2 bg-green-100 rounded-lg">
+              <DollarSign size={18} className="text-green-600" />
             </span>
           </div>
           <p className="mt-2 text-2xl font-bold text-gray-800">
-            {highestExpense ? formatCurrency(highestExpense.amount) : '$0.00'}
+            {formatCurrency(totals.totalReceived)}
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            {highestExpense ? getCategoryName(highestExpense.category) : 'No expenses'}
+            Income + Customer Payments
           </p>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
-            <h3 className="text-gray-500 text-sm font-medium">Active Projects</h3>
+            <h3 className="text-gray-500 text-sm font-medium">Total Expenses</h3>
+            <span className="p-2 bg-red-100 rounded-lg">
+              <TrendingDown size={18} className="text-red-600" />
+            </span>
+          </div>
+          <p className="mt-2 text-2xl font-bold text-gray-800">
+            {formatCurrency(totals.expenses)}
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            All expenses combined
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <h3 className="text-gray-500 text-sm font-medium">Customer Payments</h3>
             <span className="p-2 bg-purple-100 rounded-lg">
-              <Briefcase size={18} className="text-purple-600" />
+              <Users size={18} className="text-purple-600" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-800">{projects.length}</p>
-          <p className="mt-1 text-sm text-gray-500">
-            Across all categories
+          <p className="mt-2 text-2xl font-bold text-gray-800">
+            {formatCurrency(totals.payments)}
           </p>
+          <p className="mt-1 text-sm text-gray-500">
+            {paymentStats.uniqueCustomers} active customers
+          </p>
+        </div>
+      </div>
+
+      {/* Customer Payment Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-700 font-semibold">Total Due</h3>
+            <span className="p-2 bg-blue-100 rounded-lg">
+              <Wallet size={18} className="text-blue-600" />
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-gray-800">{formatCurrency(paymentStats.totalDue)}</p>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <h3 className="text-gray-500 text-sm font-medium">Recent Activity</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-700 font-semibold">Total Received</h3>
             <span className="p-2 bg-green-100 rounded-lg">
-              <Calendar size={18} className="text-green-600" />
+              <DollarSign size={18} className="text-green-600" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-800">{recentExpenses.length}</p>
-          <p className="mt-1 text-sm text-gray-500">
-            New expenses added
-          </p>
+          <p className="text-2xl font-bold text-green-600">{formatCurrency(paymentStats.totalReceived)}</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-700 font-semibold">Total Pending</h3>
+            <span className="p-2 bg-red-100 rounded-lg">
+              <TrendingDown size={18} className="text-red-600" />
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-red-600">{formatCurrency(paymentStats.totalPending)}</p>
         </div>
       </div>
 
@@ -189,38 +277,52 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Expenses */}
+      {/* Recent Transactions */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800">Recent Expenses</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Recent Transactions</h3>
         </div>
-        {recentExpenses.length > 0 ? (
+        {recentTransactions.length > 0 ? (
           <div className="divide-y divide-gray-100">
-            {recentExpenses.map((expense) => (
-              <div key={expense.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+            {recentTransactions.map((transaction) => (
+              <div key={transaction.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ 
-                          backgroundColor: projects.find(p => p.id === expense.projectId)?.color + '20' || '#E5E7EB',
-                          color: projects.find(p => p.id === expense.projectId)?.color || '#6B7280'
-                        }}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          transaction.type === 'expense' 
+                            ? 'bg-red-100 text-red-600'
+                            : transaction.type === 'income'
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-purple-100 text-purple-600'
+                        }`}
                       >
-                        {getProjectName(expense.projectId).charAt(0)}
+                        {transaction.type === 'expense' && <TrendingDown size={20} />}
+                        {transaction.type === 'income' && <TrendingUp size={20} />}
+                        {transaction.type === 'payment' && <Users size={20} />}
                       </div>
                     </div>
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-800">{expense.description}</p>
+                      <p className="text-sm font-medium text-gray-800">{transaction.title}</p>
                       <p className="text-sm text-gray-500">
-                        {getProjectName(expense.projectId)} • {getCategoryName(expense.category)}
+                        {transaction.type === 'expense' && getProjectName(transaction.projectId)}
+                        {transaction.type === 'income' && transaction.source}
+                        {transaction.type === 'payment' && `Plot ${transaction.plotNumber}`}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-800">{formatCurrency(expense.amount)}</p>
-                    <p className="text-sm text-gray-500">{format(parseISO(expense.date), 'MMM dd, yyyy')}</p>
+                    <p className={`text-sm font-semibold ${
+                      transaction.type === 'expense' 
+                        ? 'text-red-600' 
+                        : 'text-green-600'
+                    }`}>
+                      {formatCurrency(transaction.amount)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {format(parseISO(transaction.date), 'MMM dd, yyyy')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -228,7 +330,7 @@ const Dashboard: React.FC = () => {
           </div>
         ) : (
           <div className="px-6 py-8 text-center">
-            <p className="text-gray-500">No expenses added yet</p>
+            <p className="text-gray-500">No transactions found</p>
           </div>
         )}
       </div>
