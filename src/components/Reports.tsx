@@ -70,6 +70,17 @@ const Reports: React.FC = () => {
   }, [reportType, timeRange, projectFilter, categoryFilter, startDate, endDate, expenses, incomes, customerPayments]);
 
   const downloadReport = () => {
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+
+    // Add logo to the workbook
+    const logoSheet = XLSX.utils.aoa_to_sheet([
+      ['Mylands Constructions'],
+      ['From blueprint to belonging'],
+      [''],  // Empty row for spacing
+    ]);
+
+    // Add the data rows
     const reportData = filteredData.map(item => {
       const baseData = {
         Date: format(parseISO(item.date), 'dd/MM/yyyy'),
@@ -109,11 +120,27 @@ const Reports: React.FC = () => {
       }
     });
 
+    // Convert data to worksheet
     const ws = XLSX.utils.json_to_sheet(reportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Report');
-    
+
+    // Add logo sheet and data sheet to workbook
+    XLSX.utils.book_append_sheet(wb, logoSheet, 'Cover');
+    XLSX.utils.book_append_sheet(wb, ws, 'Report Data');
+
+    // Set column widths
+    const wscols = [
+      {wch: 12}, // Date
+      {wch: 15}, // Amount
+      {wch: 20}, // Project/Source
+      {wch: 20}, // Category/Description
+      {wch: 30}, // Description/Payment Mode
+    ];
+    ws['!cols'] = wscols;
+
+    // Generate filename with timestamp
     const fileName = `${reportType}-report-${format(new Date(), 'dd-MM-yyyy')}.xlsx`;
+
+    // Write the workbook to file
     XLSX.writeFile(wb, fileName);
   };
 
@@ -129,9 +156,12 @@ const Reports: React.FC = () => {
   return (
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Reports</h1>
-          <p className="text-gray-600">Generate and download detailed reports</p>
+        <div className="flex items-center gap-4">
+          <img src="/logo.jpeg" alt="Mylands Constructions" className="h-12" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Reports</h1>
+            <p className="text-gray-600">Generate and download detailed reports</p>
+          </div>
         </div>
       </header>
 
