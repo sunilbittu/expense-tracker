@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useExpenseContext } from '../context/ExpenseContext';
+import { useExpenses } from '../context/ExpenseContext';
 
 interface IncomeFormProps {
   incomeId?: string | null;
@@ -7,7 +7,7 @@ interface IncomeFormProps {
 }
 
 const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
-  const { addIncome, updateIncome, getIncomeById } = useExpenseContext();
+  const { addIncome, updateIncome, getIncomeById } = useExpenses();
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
