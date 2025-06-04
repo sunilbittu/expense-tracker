@@ -19,7 +19,7 @@ export type Category = {
 
 export type PaymentMode = 'cash' | 'online' | 'cheque';
 
-export type TransactionType = 'expense' | 'income';
+export type TransactionType = 'expense' | 'income' | 'customer-payment';
 
 export type Income = {
   id: string;
@@ -32,6 +32,20 @@ export type Income = {
   transactionId?: string;
   source: string;
   payee: string;
+};
+
+export type CustomerPayment = {
+  id: string;
+  amount: number;
+  date: string;
+  description: string;
+  createdAt: string;
+  paymentMode: PaymentMode;
+  chequeNumber?: string;
+  transactionId?: string;
+  customerName: string;
+  invoiceNumber?: string;
+  projectId: string;
 };
 
 export type Expense = {
@@ -51,6 +65,7 @@ export type Expense = {
 export type ExpenseContextType = {
   expenses: Expense[];
   incomes: Income[];
+  customerPayments: CustomerPayment[];
   projects: Project[];
   categories: Category[];
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
@@ -60,6 +75,10 @@ export type ExpenseContextType = {
   updateIncome: (id: string, income: Omit<Income, 'id' | 'createdAt'>) => void;
   deleteIncome: (id: string) => void;
   getIncomeById: (id: string) => Income | undefined;
+  addCustomerPayment: (payment: Omit<CustomerPayment, 'id' | 'createdAt'>) => void;
+  updateCustomerPayment: (id: string, payment: Omit<CustomerPayment, 'id' | 'createdAt'>) => void;
+  deleteCustomerPayment: (id: string) => void;
+  getCustomerPaymentById: (id: string) => CustomerPayment | undefined;
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (id: string, project: Omit<Project, 'id'>) => void;
   deleteProject: (id: string) => void;
@@ -68,7 +87,7 @@ export type ExpenseContextType = {
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'projects' | 'add' | 'add-income' | 'edit' | 'edit-income';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'add' | 'add-income' | 'add-customer-payment' | 'edit' | 'edit-income' | 'edit-customer-payment';
 
 export type FilterOptions = {
   project: string;

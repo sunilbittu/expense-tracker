@@ -5,7 +5,8 @@ import {
   Briefcase, 
   PlusCircle,
   LogOut,
-  DollarSign
+  DollarSign,
+  Users
 } from 'lucide-react';
 import { ActiveView } from '../types';
 
@@ -19,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: 'expenses', label: 'Expenses', icon: <Receipt size={20} /> },
     { id: 'income', label: 'Income', icon: <DollarSign size={20} /> },
+    { id: 'customer-payments', label: 'Customer Payments', icon: <Users size={20} /> },
     { id: 'projects', label: 'Projects', icon: <Briefcase size={20} /> },
   ];
 
@@ -64,6 +66,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         >
           <PlusCircle size={20} className="mr-2" />
           <span>Add Income</span>
+        </button>
+
+        <button
+          onClick={() => setActiveView('add-customer-payment')}
+          className="w-full flex items-center justify-center py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+        >
+          <PlusCircle size={20} className="mr-2" />
+          <span>Add Customer Payment</span>
         </button>
       </div>
 
