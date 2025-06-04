@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useExpense } from '../context/ExpenseContext';
+import { useExpenses } from '../context/ExpenseContext';
 
 const CustomerPaymentForm = () => {
-  const { addExpense } = useExpense();
+  const { addExpense } = useExpenses();
   const [formData, setFormData] = useState({
     customerName: '',
     amount: '',
