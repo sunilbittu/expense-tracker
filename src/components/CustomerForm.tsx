@@ -306,7 +306,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               )}
             </div>
 
-            {/* Sale Price (Auto-calculated) */}
+            {/* Sale Price (Auto-calculated and disabled) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Sale Price (Auto-calculated)
@@ -315,8 +315,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
                 type="number"
                 name="salePrice"
                 value={formData.salePrice}
-                readOnly
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                disabled
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
                 placeholder="Auto-calculated"
               />
             </div>
@@ -343,7 +343,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               )}
             </div>
 
-            {/* Construction Price (Auto-calculated) */}
+            {/* Construction Price (Auto-calculated and disabled) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Construction Price (Auto-calculated)
@@ -352,8 +352,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
                 type="number"
                 name="constructionPrice"
                 value={formData.constructionPrice}
-                readOnly
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                disabled
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
                 placeholder="Auto-calculated"
               />
             </div>
