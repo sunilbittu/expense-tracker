@@ -47,6 +47,17 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
       }
     }
   }, [customerId, getCustomerById]);
+
+  // Auto-calculate sale price when plot size or price per yard changes
+  useEffect(() => {
+    if (formData.plotSize > 0 && formData.pricePerYard > 0) {
+      const calculatedSalePrice = formData.plotSize * formData.pricePerYard;
+      setFormData(prev => ({
+        ...prev,
+        salePrice: calculatedSalePrice
+      }));
+    }
+  }, [formData.plotSize, formData.pricePerYard]);
   
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -65,10 +76,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     
     if (!formData.projectId) {
       newErrors.projectId = 'Project is required';
-    }
-    
-    if (formData.salePrice <= 0) {
-      newErrors.salePrice = 'Sale price must be greater than zero';
     }
     
     if (formData.pricePerYard <= 0) {
@@ -242,28 +249,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               )}
             </div>
 
-            {/* Sale Price */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sale Price
-              </label>
-              <input
-                type="number"
-                name="salePrice"
-                value={formData.salePrice}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.salePrice ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter sale price"
-              />
-              {errors.salePrice && (
-                <p className="mt-1 text-sm text-red-500">{errors.salePrice}</p>
-              )}
-            </div>
-
             {/* Price Per Yard */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -284,6 +269,21 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               {errors.pricePerYard && (
                 <p className="mt-1 text-sm text-red-500">{errors.pricePerYard}</p>
               )}
+            </div>
+
+            {/* Sale Price (Auto-calculated) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sale Price (Auto-calculated)
+              </label>
+              <input
+                type="number"
+                name="salePrice"
+                value={formData.salePrice}
+                readOnly
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                placeholder="Auto-calculated"
+              />
             </div>
 
             {/* Construction Price */}
