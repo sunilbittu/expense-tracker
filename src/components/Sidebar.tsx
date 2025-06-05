@@ -11,6 +11,7 @@ import {
   Landmark
 } from 'lucide-react';
 import { ActiveView } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   activeView: ActiveView;
@@ -18,6 +19,37 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
+  const { user, logout } = useAuth();
+  
+  // Get the first letter of the email for the avatar
+  const getAvatarLetter = (email: string) => {
+    return email ? email.charAt(0).toUpperCase() : 'U';
+  };
+
+  // Get avatar background color based on email
+  const getAvatarColor = (email: string) => {
+    if (!email) return 'bg-gray-400';
+    
+    const colors = [
+      'bg-blue-500',
+      'bg-green-500', 
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-yellow-500',
+      'bg-red-500',
+      'bg-teal-500'
+    ];
+    
+    // Simple hash function to consistently pick a color based on email
+    const hash = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: 'expenses', label: 'Expenses', icon: <Receipt size={20} /> },
@@ -84,14 +116,29 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
       </div>
 
       <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center px-4 py-3">
-          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-            <span className="text-gray-600 font-semibold">U</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className={`w-10 h-10 rounded-full ${getAvatarColor(user?.email || '')} flex items-center justify-center`}>
+              <span className="text-white font-semibold text-sm">
+                {getAvatarLetter(user?.email || '')}
+              </span>
+            </div>
+            <div className="ml-3 flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-800 truncate">
+                {user?.username || 'User'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {user?.email || 'user@example.com'}
+              </p>
+            </div>
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-800">User</p>
-            <p className="text-xs text-gray-500">user@example.com</p>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title="Logout"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </div>

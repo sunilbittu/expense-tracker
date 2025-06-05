@@ -108,9 +108,9 @@ export const incomeCategories = [
 ];
 
 export const defaultProjects: Project[] = [
-  { id: '1', name: 'Personal', color: '#3B82F6' },
-  { id: '2', name: 'Work', color: '#10B981' },
-  { id: '3', name: 'Home Renovation', color: '#F59E0B' },
+  { id: '1', name: 'Personal', color: '#3B82F6', location: '', commenceDate: '' },
+  { id: '2', name: 'Work', color: '#10B981', location: '', commenceDate: '' },
+  { id: '3', name: 'Home Renovation', color: '#F59E0B', location: '', commenceDate: '' },
 ];
 
 export const categoryIcons: Record<string, React.ElementType> = {

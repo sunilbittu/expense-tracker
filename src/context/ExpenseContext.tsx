@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Expense, Project, Category, Income, CustomerPayment, Customer, ExpenseContextType, Employee, Landlord } from '../types';
 import { defaultCategories, defaultProjects } from '../data/mockData';
+import { customers as customersApi, projects as projectsApi, categories as categoriesApi, incomes as incomesApi } from '../services/api';
 import toast from 'react-hot-toast';
 
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
@@ -20,30 +21,67 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [incomes, setIncomes] = useState<Income[]>(() => {
-    const saved = localStorage.getItem('incomes');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [incomes, setIncomes] = useState<Income[]>([]);
+  const [isLoadingIncomes, setIsLoadingIncomes] = useState(false);
 
   const [customerPayments, setCustomerPayments] = useState<CustomerPayment[]>(() => {
     const saved = localStorage.getItem('customerPayments');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [customers, setCustomers] = useState<Customer[]>(() => {
-    const saved = localStorage.getItem('customers');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
 
-  const [projects, setProjects] = useState<Project[]>(() => {
-    const saved = localStorage.getItem('projects');
-    return saved ? JSON.parse(saved) : defaultProjects;
-  });
+  // Function to refresh customers from API
+  const refreshCustomers = async () => {
+    setIsLoadingCustomers(true);
+    try {
+      const data = await customersApi.getAll();
+      setCustomers(data);
+      toast.success('Customer list refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing customers:', error);
+      toast.error('Failed to refresh customers');
+    } finally {
+      setIsLoadingCustomers(false);
+    }
+  };
 
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem('categories');
-    return saved ? JSON.parse(saved) : defaultCategories;
-  });
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+
+  // Function to refresh projects from API
+  const refreshProjects = async () => {
+    setIsLoadingProjects(true);
+    try {
+      const data = await projectsApi.getAll();
+      setProjects(data);
+      toast.success('Project list refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing projects:', error);
+      toast.error('Failed to refresh projects');
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  };
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
+  // Function to refresh categories from API
+  const refreshCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const data = await categoriesApi.getAll();
+      setCategories(data);
+      toast.success('Category list refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing categories:', error);
+      toast.error('Failed to refresh categories');
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
 
   const [employees, setEmployees] = useState<Employee[]>(() => {
     const saved = localStorage.getItem('employees');
@@ -59,25 +97,127 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     localStorage.setItem('expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  useEffect(() => {
-    localStorage.setItem('incomes', JSON.stringify(incomes));
-  }, [incomes]);
+  // Function to refresh incomes from API
+  const refreshIncomes = async () => {
+    setIsLoadingIncomes(true);
+    try {
+      const data = await incomesApi.getAll();
+      setIncomes(data.incomes || []);
+    } catch (error) {
+      console.error('Error refreshing incomes:', error);
+      toast.error('Failed to refresh incomes');
+    } finally {
+      setIsLoadingIncomes(false);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem('customerPayments', JSON.stringify(customerPayments));
   }, [customerPayments]);
 
+  // Load customers from API on mount
   useEffect(() => {
-    localStorage.setItem('customers', JSON.stringify(customers));
-  }, [customers]);
+    const loadCustomers = async () => {
+      setIsLoadingCustomers(true);
+      try {
+        const data = await customersApi.getAll();
+        setCustomers(data);
+      } catch (error) {
+        console.error('Error loading customers:', error);
+        toast.error('Failed to load customers');
+      } finally {
+        setIsLoadingCustomers(false);
+      }
+    };
 
-  useEffect(() => {
-    localStorage.setItem('projects', JSON.stringify(projects));
-  }, [projects]);
+    // Only load if we have a token (user is authenticated)
+    const token = localStorage.getItem('token');
+    if (token) {
+      loadCustomers();
+    }
+  }, []);
 
+  // Load projects from API on mount
   useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories]);
+    const loadProjects = async () => {
+      setIsLoadingProjects(true);
+      try {
+        const data = await projectsApi.getAll();
+        setProjects(data);
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        toast.error('Failed to load projects');
+        // Fallback to default projects if API fails
+        setProjects(defaultProjects);
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+
+    // Only load if we have a token (user is authenticated)
+    const token = localStorage.getItem('token');
+    if (token) {
+      loadProjects();
+    } else {
+      // Use default projects when not authenticated
+      setProjects(defaultProjects);
+    }
+  }, []);
+
+  // Load incomes from API on mount
+  useEffect(() => {
+    const loadIncomes = async () => {
+      setIsLoadingIncomes(true);
+      try {
+        const data = await incomesApi.getAll();
+        setIncomes(data.incomes || []);
+      } catch (error) {
+        console.error('Error loading incomes:', error);
+        toast.error('Failed to load incomes');
+      } finally {
+        setIsLoadingIncomes(false);
+      }
+    };
+
+    // Only load if we have a token (user is authenticated)
+    const token = localStorage.getItem('token');
+    if (token) {
+      loadIncomes();
+    }
+  }, []);
+
+  // Load categories from API on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const data = await categoriesApi.getAll();
+        if (data.length === 0) {
+          // Initialize default categories if none exist
+          const initResponse = await categoriesApi.initDefaults();
+          setCategories(initResponse.categories);
+        } else {
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        toast.error('Failed to load categories');
+        // Fallback to default categories if API fails
+        setCategories(defaultCategories);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    // Only load if we have a token (user is authenticated)
+    const token = localStorage.getItem('token');
+    if (token) {
+      loadCategories();
+    } else {
+      // Use default categories when not authenticated
+      setCategories(defaultCategories);
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('employees', JSON.stringify(employees));
@@ -139,36 +279,54 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     toast.success('Expense deleted successfully');
   };
 
-  const addIncome = (income: Omit<Income, 'id' | 'createdAt'>) => {
-    const newIncome = {
-      ...income,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
-    };
-    setIncomes([...incomes, newIncome]);
-    toast.success('Income added successfully');
+  const addIncome = async (income: Omit<Income, 'id' | 'createdAt'>) => {
+    try {
+      const newIncome = await incomesApi.create(income);
+      setIncomes([...incomes, newIncome]);
+      toast.success('Income added successfully');
+    } catch (error: any) {
+      console.error('Error adding income:', error);
+      toast.error(error.response?.data?.message || 'Failed to add income');
+      throw error;
+    }
   };
 
-  const updateIncome = (id: string, income: Omit<Income, 'id' | 'createdAt'>) => {
-    const updatedIncomes = incomes.map((inc) =>
-      inc.id === id
-        ? {
-            ...inc,
-            ...income,
-          }
-        : inc
-    );
-    setIncomes(updatedIncomes);
-    toast.success('Income updated successfully');
+  const updateIncome = async (id: string, income: Omit<Income, 'id' | 'createdAt'>) => {
+    try {
+      const updatedIncome = await incomesApi.update(id, income);
+      const updatedIncomes = incomes.map((inc) =>
+        inc.id === id ? updatedIncome : inc
+      );
+      setIncomes(updatedIncomes);
+      toast.success('Income updated successfully');
+    } catch (error: any) {
+      console.error('Error updating income:', error);
+      toast.error(error.response?.data?.message || 'Failed to update income');
+      throw error;
+    }
   };
 
-  const deleteIncome = (id: string) => {
-    setIncomes(incomes.filter((income) => income.id !== id));
-    toast.success('Income deleted successfully');
+  const deleteIncome = async (id: string) => {
+    try {
+      await incomesApi.delete(id);
+      setIncomes(incomes.filter((income) => income.id !== id));
+      toast.success('Income deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting income:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete income');
+      throw error;
+    }
   };
 
-  const getIncomeById = (id: string) => {
-    return incomes.find((income) => income.id === id);
+  const getIncomeById = async (id: string) => {
+    try {
+      const response = await incomesApi.getById(id);
+      return response.income;
+    } catch (error) {
+      console.error('Error fetching income:', error);
+      toast.error('Failed to fetch income details');
+      return null;
+    }
   };
 
   const addCustomerPayment = (payment: Omit<CustomerPayment, 'id' | 'createdAt'>) => {
@@ -203,30 +361,33 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return customerPayments.find((payment) => payment.id === id);
   };
 
-  const addCustomer = (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-    const newCustomer = {
-      ...customer,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
-    };
-    setCustomers([...customers, newCustomer]);
-    toast.success('Customer added successfully');
+  const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
+    try {
+      const response = await customersApi.create(customer);
+      setCustomers(prev => [...prev, response.customer]);
+      toast.success('Customer added successfully');
+    } catch (error: any) {
+      console.error('Error adding customer:', error);
+      toast.error(error.response?.data?.message || 'Failed to add customer');
+      throw error;
+    }
   };
 
-  const updateCustomer = (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => {
-    const updatedCustomers = customers.map((cust) =>
-      cust.id === id
-        ? {
-            ...cust,
-            ...customer,
-          }
-        : cust
-    );
-    setCustomers(updatedCustomers);
-    toast.success('Customer updated successfully');
+  const updateCustomer = async (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => {
+    try {
+      const response = await customersApi.update(id, customer);
+      setCustomers(prev => prev.map(cust => 
+        cust.id === id ? response.customer : cust
+      ));
+      toast.success('Customer updated successfully');
+    } catch (error: any) {
+      console.error('Error updating customer:', error);
+      toast.error(error.response?.data?.message || 'Failed to update customer');
+      throw error;
+    }
   };
 
-  const deleteCustomer = (id: string) => {
+  const deleteCustomer = async (id: string) => {
     // Check if customer has any payments
     const hasPayments = customerPayments.some(payment => 
       payment.customerName === customers.find(c => c.id === id)?.name
@@ -237,37 +398,48 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     
-    setCustomers(customers.filter((customer) => customer.id !== id));
-    toast.success('Customer deleted successfully');
+    try {
+      await customersApi.delete(id);
+      setCustomers(prev => prev.filter(customer => customer.id !== id));
+      toast.success('Customer deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting customer:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete customer');
+      throw error;
+    }
   };
 
   const getCustomerById = (id: string) => {
     return customers.find((customer) => customer.id === id);
   };
 
-  const addProject = (project: Omit<Project, 'id'>) => {
-    const newProject = {
-      ...project,
-      id: uuidv4(),
-    };
-    setProjects([...projects, newProject]);
-    toast.success('Project added successfully');
+  const addProject = async (project: Omit<Project, 'id'>) => {
+    try {
+      const response = await projectsApi.create(project);
+      setProjects(prev => [...prev, response.project]);
+      toast.success('Project added successfully');
+    } catch (error: any) {
+      console.error('Error adding project:', error);
+      toast.error(error.response?.data?.message || 'Failed to add project');
+      throw error;
+    }
   };
 
-  const updateProject = (id: string, project: Omit<Project, 'id'>) => {
-    const updatedProjects = projects.map((proj) =>
-      proj.id === id
-        ? {
-            ...proj,
-            ...project,
-          }
-        : proj
-    );
-    setProjects(updatedProjects);
-    toast.success('Project updated successfully');
+  const updateProject = async (id: string, project: Omit<Project, 'id'>) => {
+    try {
+      const response = await projectsApi.update(id, project);
+      setProjects(prev => prev.map(proj => 
+        proj.id === id ? response.project : proj
+      ));
+      toast.success('Project updated successfully');
+    } catch (error: any) {
+      console.error('Error updating project:', error);
+      toast.error(error.response?.data?.message || 'Failed to update project');
+      throw error;
+    }
   };
 
-  const deleteProject = (id: string) => {
+  const deleteProject = async (id: string) => {
     // Check if there are expenses with this project
     const hasExpenses = expenses.some(expense => expense.projectId === id);
     
@@ -276,8 +448,15 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     
-    setProjects(projects.filter((project) => project.id !== id));
-    toast.success('Project deleted successfully');
+    try {
+      await projectsApi.delete(id);
+      setProjects(prev => prev.filter(project => project.id !== id));
+      toast.success('Project deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting project:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete project');
+      throw error;
+    }
   };
 
   const getProjectById = (id: string) => {
@@ -370,6 +549,10 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     categories,
     employees,
     landlords,
+    isLoadingCustomers,
+    isLoadingProjects,
+    isLoadingCategories,
+    isLoadingIncomes,
     addExpense,
     updateExpense,
     deleteExpense,
@@ -377,6 +560,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateIncome,
     deleteIncome,
     getIncomeById,
+    refreshIncomes,
     addCustomerPayment,
     updateCustomerPayment,
     deleteCustomerPayment,
@@ -385,6 +569,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateCustomer,
     deleteCustomer,
     getCustomerById,
+    refreshCustomers,
+    refreshProjects,
+    refreshCategories,
     addProject,
     updateProject,
     deleteProject,

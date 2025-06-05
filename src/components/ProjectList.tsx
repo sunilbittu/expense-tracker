@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 import { Project } from '../types';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Briefcase } from 'lucide-react';
 
 const ProjectList: React.FC = () => {
   const { projects, addProject, updateProject, deleteProject } = useExpenses();
@@ -10,75 +10,93 @@ const ProjectList: React.FC = () => {
   const [formData, setFormData] = useState<Omit<Project, 'id'>>({
     name: '',
     color: '#3B82F6',
+    location: '',
+    commenceDate: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const resetForm = () => {
     setFormData({
       name: '',
       color: '#3B82F6',
+      location: '',
+      commenceDate: '',
     });
     setErrors({});
   };
-  
+
   const openAddModal = () => {
     setEditingProject(null);
     resetForm();
     setIsModalOpen(true);
   };
-  
+
   const openEditModal = (project: Project) => {
     setEditingProject(project);
     setFormData({
       name: project.name,
       color: project.color,
+      location: project.location || '',
+      commenceDate: project.commenceDate || '',
     });
     setIsModalOpen(true);
   };
-  
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProject(null);
     resetForm();
   };
-  
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Project name is required';
     }
-    
+
+    if (!formData.location.trim()) {
+      newErrors.location = 'Project location is required';
+    }
+
+    if (!formData.commenceDate.trim()) {
+      newErrors.commenceDate = 'Commence date is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
-    if (editingProject) {
-      updateProject(editingProject.id, formData);
-    } else {
-      addProject(formData);
+
+    try {
+      if (editingProject) {
+        await updateProject(editingProject.id, formData);
+      } else {
+        await addProject(formData);
+      }
+      closeModal();
+    } catch (error) {
+      // Error is already handled in the context with toast
+      console.error('Error submitting project:', error);
     }
-    
-    closeModal();
   };
-  
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    
+
     setFormData({
       ...formData,
       [name]: value,
     });
-    
+
     // Clear error when user types
     if (errors[name]) {
       setErrors({
@@ -87,13 +105,18 @@ const ProjectList: React.FC = () => {
       });
     }
   };
-  
-  const handleDelete = (id: string) => {
+
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this project?')) {
-      deleteProject(id);
+      try {
+        await deleteProject(id);
+      } catch (error) {
+        // Error is already handled in the context with toast
+        console.error('Error deleting project:', error);
+      }
     }
   };
-  
+
   // Color options
   const colorOptions = [
     { label: 'Blue', value: '#3B82F6' },
@@ -105,7 +128,7 @@ const ProjectList: React.FC = () => {
     { label: 'Indigo', value: '#6366F1' },
     { label: 'Teal', value: '#14B8A6' },
   ];
-  
+
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
@@ -121,7 +144,7 @@ const ProjectList: React.FC = () => {
           <span>New Project</span>
         </button>
       </header>
-      
+
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((project) => (
@@ -130,9 +153,9 @@ const ProjectList: React.FC = () => {
             className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between mb-4">
-              <div 
+              <div
                 className="w-12 h-12 rounded-full flex items-center justify-center"
-                style={{ 
+                style={{
                   backgroundColor: project.color + '20',
                   color: project.color,
                 }}
@@ -154,17 +177,27 @@ const ProjectList: React.FC = () => {
                 </button>
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800">{project.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">{project.name}</h3>
+            {project.location && (
+              <p className="text-sm text-gray-600 mb-1">
+                <span className="font-medium">Location:</span> {project.location}
+              </p>
+            )}
+            {project.commenceDate && (
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Start Date:</span> {new Date(project.commenceDate).toLocaleDateString()}
+              </p>
+            )}
           </div>
         ))}
       </div>
-      
+
       {/* Add/Edit Project Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black opacity-40" onClick={closeModal}></div>
-            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 z-10">
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg p-6 z-10">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 {editingProject ? 'Edit Project' : 'Add New Project'}
               </h2>
@@ -181,15 +214,14 @@ const ProjectList: React.FC = () => {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Enter project name"
-                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.name ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.name ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {errors.name && (
                       <p className="mt-1 text-sm text-red-500">{errors.name}</p>
                     )}
                   </div>
-                  
+
                   {/* Project Color */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -200,9 +232,8 @@ const ProjectList: React.FC = () => {
                         <div
                           key={color.value}
                           onClick={() => setFormData({ ...formData, color: color.value })}
-                          className={`cursor-pointer h-10 rounded-md flex items-center justify-center transition-transform ${
-                            formData.color === color.value ? 'ring-2 ring-offset-2 ring-gray-500 scale-110' : ''
-                          }`}
+                          className={`cursor-pointer h-10 rounded-md flex items-center justify-center transition-transform ${formData.color === color.value ? 'ring-2 ring-offset-2 ring-gray-500 scale-110' : ''
+                            }`}
                           style={{ backgroundColor: color.value }}
                         >
                           {formData.color === color.value && (
@@ -212,7 +243,44 @@ const ProjectList: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  
+
+                  {/* Project Location */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Project Location
+                    </label>
+                    <textarea
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      placeholder="Enter project location"
+                      rows={3}
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none ${errors.location ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                    />
+                    {errors.location && (
+                      <p className="mt-1 text-sm text-red-500">{errors.location}</p>
+                    )}
+                  </div>
+
+                  {/* Commence Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Commence Date
+                    </label>
+                    <input
+                      type="date"
+                      name="commenceDate"
+                      value={formData.commenceDate}
+                      onChange={handleChange}
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.commenceDate ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                    />
+                    {errors.commenceDate && (
+                      <p className="mt-1 text-sm text-red-500">{errors.commenceDate}</p>
+                    )}
+                  </div>
+
                   {/* Buttons */}
                   <div className="flex justify-end space-x-3 mt-6">
                     <button
@@ -235,7 +303,7 @@ const ProjectList: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {/* Empty State */}
       {projects.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">

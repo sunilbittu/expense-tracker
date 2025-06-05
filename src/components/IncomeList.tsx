@@ -29,6 +29,8 @@ interface IncomeListProps {
 
 const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) => {
   const { incomes, deleteIncome } = useExpenses();
+
+  console.log('Income List', incomes);
   const { handlePrint, exportToPDF, formatCurrency: formatCurrencyUtil } = usePrintAndExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPaymentMode, setSelectedPaymentMode] = useState<PaymentMode | ''>('');
@@ -137,9 +139,14 @@ const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) =>
     }
   };
 
-  const handleDeleteIncome = (income: Income) => {
+  const handleDeleteIncome = async (income: Income) => {
     if (window.confirm(`Are you sure you want to delete this income entry of ${formatCurrency(income.amount)} from ${income.source}? This action cannot be undone.`)) {
-      deleteIncome(income.id);
+      try {
+        await deleteIncome(income.id);
+      } catch (error) {
+        // Error is handled by the context
+        console.error('Failed to delete income:', error);
+      }
     }
   };
 
@@ -444,7 +451,7 @@ const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) =>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredIncomes.map((income) => (
-                  <tr key={income.id} className="hover:bg-gray-50">
+                  <tr key={income._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -504,7 +511,7 @@ const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) =>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => onEditIncome(income.id)}
+                          onClick={() => onEditIncome(income._id)}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
                           title="Edit Income"
                         >

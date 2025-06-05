@@ -1,9 +1,9 @@
-import { FlameIcon as IconName } from 'lucide-react';
-
 export type Project = {
-  id: string;
+  _id: string;
   name: string;
   color: string;
+  location: string;
+  commenceDate: string;
 };
 
 export type SubCategory = {
@@ -118,21 +118,29 @@ export type ExpenseContextType = {
   landlords: Landlord[];
   projects: Project[];
   categories: Category[];
+  isLoadingCustomers: boolean;
+  isLoadingProjects: boolean;
+  isLoadingCategories: boolean;
+  isLoadingIncomes: boolean;
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
   updateExpense: (id: string, expense: Omit<Expense, 'id' | 'createdAt'>) => void;
   deleteExpense: (id: string) => void;
-  addIncome: (income: Omit<Income, 'id' | 'createdAt'>) => void;
-  updateIncome: (id: string, income: Omit<Income, 'id' | 'createdAt'>) => void;
-  deleteIncome: (id: string) => void;
-  getIncomeById: (id: string) => Income | undefined;
+  addIncome: (income: Omit<Income, 'id' | 'createdAt'>) => Promise<void>;
+  updateIncome: (id: string, income: Omit<Income, 'id' | 'createdAt'>) => Promise<void>;
+  deleteIncome: (id: string) => Promise<void>;
+  getIncomeById: (id: string) => Promise<Income | null>;
+  refreshIncomes: () => Promise<void>;
   addCustomerPayment: (payment: Omit<CustomerPayment, 'id' | 'createdAt'>) => void;
   updateCustomerPayment: (id: string, payment: Omit<CustomerPayment, 'id' | 'createdAt'>) => void;
   deleteCustomerPayment: (id: string) => void;
   getCustomerPaymentById: (id: string) => CustomerPayment | undefined;
-  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => void;
-  updateCustomer: (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => void;
-  deleteCustomer: (id: string) => void;
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<void>;
+  updateCustomer: (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<void>;
+  deleteCustomer: (id: string) => Promise<void>;
   getCustomerById: (id: string) => Customer | undefined;
+  refreshCustomers: () => Promise<void>;
+  refreshProjects: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
   addEmployee: (employee: Omit<Employee, 'id' | 'createdAt'>) => void;
   updateEmployee: (id: string, employee: Omit<Employee, 'id' | 'createdAt'>) => void;
   deleteEmployee: (id: string) => void;
@@ -141,9 +149,9 @@ export type ExpenseContextType = {
   updateLandlord: (id: string, landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => void;
   deleteLandlord: (id: string) => void;
   getLandlordById: (id: string) => Landlord | undefined;
-  addProject: (project: Omit<Project, 'id'>) => void;
-  updateProject: (id: string, project: Omit<Project, 'id'>) => void;
-  deleteProject: (id: string) => void;
+  addProject: (project: Omit<Project, 'id'>) => Promise<void>;
+  updateProject: (id: string, project: Omit<Project, 'id'>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
   getCategoryById: (id: string) => Category | undefined;
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;

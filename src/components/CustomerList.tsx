@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 import { Customer } from '../types';
 import usePrintAndExport from '../hooks/usePrintAndExport';
@@ -18,7 +18,13 @@ import {
   Eye,
   Plus,
   Printer,
-  Download
+  Download,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  SortAsc,
+  SortDesc
 } from 'lucide-react';
 
 interface CustomerListProps {
@@ -29,10 +35,30 @@ interface CustomerListProps {
 const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustomer }) => {
   const { customers, projects, deleteCustomer, customerPayments } = useExpenses();
   const { handlePrint, exportToPDF, formatCurrency: formatCurrencyUtil } = usePrintAndExport();
+  
+  // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'plotNumber' | 'salePrice' | 'createdAt'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'plotNumber' | 'salePrice' | 'createdAt' | 'balance'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [balanceFilter, setBalanceFilter] = useState<'all' | 'outstanding' | 'paid'>('all');
+  const [minAmount, setMinAmount] = useState('');
+  const [maxAmount, setMaxAmount] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdated(new Date());
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -44,31 +70,46 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
   };
 
   // Calculate total payments for a customer
-  const getCustomerTotalPayments = (customerName: string) => {
+  const getCustomerTotalPayments = useCallback((customerName: string) => {
     return customerPayments
       .filter(payment => payment.customerName === customerName)
       .reduce((total, payment) => total + payment.amount, 0);
-  };
+  }, [customerPayments]);
 
   // Calculate balance due for a customer
-  const getCustomerBalance = (customer: Customer) => {
+  const getCustomerBalance = useCallback((customer: Customer) => {
     const totalPrice = customer.salePrice + customer.constructionPrice;
     const totalPaid = getCustomerTotalPayments(customer.name);
     return totalPrice - totalPaid;
-  };
+  }, [getCustomerTotalPayments]);
 
-  // Filtered and sorted customers
+  // Enhanced filtering and sorting
   const filteredCustomers = useMemo(() => {
     let filtered = customers.filter(customer => {
+      // Text search
       const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            customer.plotNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            customer.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            customer.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Project filter
       const matchesProject = !selectedProject || customer.projectId === selectedProject;
-      return matchesSearch && matchesProject;
+      
+      // Balance filter
+      const balance = getCustomerBalance(customer);
+      const matchesBalance = balanceFilter === 'all' || 
+                            (balanceFilter === 'outstanding' && balance > 0) ||
+                            (balanceFilter === 'paid' && balance <= 0);
+      
+      // Amount range filter
+      const totalValue = customer.salePrice + customer.constructionPrice;
+      const matchesMinAmount = !minAmount || totalValue >= parseFloat(minAmount);
+      const matchesMaxAmount = !maxAmount || totalValue <= parseFloat(maxAmount);
+      
+      return matchesSearch && matchesProject && matchesBalance && matchesMinAmount && matchesMaxAmount;
     });
 
-    // Sort customers
+    // Enhanced sorting
     filtered.sort((a, b) => {
       let aValue: string | number;
       let bValue: string | number;
@@ -85,6 +126,10 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
         case 'salePrice':
           aValue = a.salePrice + a.constructionPrice;
           bValue = b.salePrice + b.constructionPrice;
+          break;
+        case 'balance':
+          aValue = getCustomerBalance(a);
+          bValue = getCustomerBalance(b);
           break;
         case 'createdAt':
           aValue = new Date(a.createdAt).getTime();
@@ -103,9 +148,21 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
     });
 
     return filtered;
-  }, [customers, searchQuery, selectedProject, sortBy, sortOrder]);
+  }, [customers, searchQuery, selectedProject, sortBy, sortOrder, balanceFilter, minAmount, maxAmount, getCustomerBalance]);
 
-  const handleSort = (field: 'name' | 'plotNumber' | 'salePrice' | 'createdAt') => {
+  // Pagination
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCustomers, currentPage, itemsPerPage]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedProject, balanceFilter, minAmount, maxAmount]);
+
+  const handleSort = (field: 'name' | 'plotNumber' | 'salePrice' | 'createdAt' | 'balance') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -114,10 +171,55 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
     }
   };
 
-  const handleDeleteCustomer = (customer: Customer) => {
+  const handleDeleteCustomer = async (customer: Customer) => {
     if (window.confirm(`Are you sure you want to delete customer "${customer.name}"? This action cannot be undone.`)) {
-      deleteCustomer(customer.id);
+      try {
+        await deleteCustomer(customer.id);
+        setSelectedCustomers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(customer.id);
+          return newSet;
+        });
+      } catch (error) {
+        // Error is already handled in the context with toast
+        console.error('Error deleting customer:', error);
+      }
     }
+  };
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setLastUpdated(new Date());
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  const handleSelectCustomer = (customerId: string) => {
+    setSelectedCustomers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(customerId)) {
+        newSet.delete(customerId);
+      } else {
+        newSet.add(customerId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCustomers.size === paginatedCustomers.length) {
+      setSelectedCustomers(new Set());
+    } else {
+      setSelectedCustomers(new Set(paginatedCustomers.map(c => c.id)));
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedProject('');
+    setBalanceFilter('all');
+    setMinAmount('');
+    setMaxAmount('');
+    setShowAdvancedFilters(false);
   };
 
   const handleExportPDF = () => {
@@ -130,6 +232,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
       { header: 'Sale Price', dataKey: 'salePrice' },
       { header: 'Construction Price', dataKey: 'constructionPrice' },
       { header: 'Total Price', dataKey: 'totalPrice' },
+      { header: 'Balance', dataKey: 'balance' },
       { header: 'Phone', dataKey: 'phone' },
       { header: 'Email', dataKey: 'email' },
     ];
@@ -140,6 +243,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
         ...customer,
         projectName: project?.name || 'Unknown Project',
         totalPrice: customer.salePrice + customer.constructionPrice,
+        balance: getCustomerBalance(customer),
       };
     });
 
@@ -151,6 +255,22 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
     });
   };
 
+  // Calculate dynamic stats
+  const stats = useMemo(() => {
+    const totalValue = filteredCustomers.reduce((sum, c) => sum + c.salePrice + c.constructionPrice, 0);
+    const totalPaid = filteredCustomers.reduce((sum, c) => sum + getCustomerTotalPayments(c.name), 0);
+    const totalOutstanding = totalValue - totalPaid;
+    const outstandingCustomers = filteredCustomers.filter(c => getCustomerBalance(c) > 0).length;
+
+    return {
+      totalCustomers: filteredCustomers.length,
+      totalValue,
+      totalPaid,
+      totalOutstanding,
+      outstandingCustomers
+    };
+  }, [filteredCustomers, getCustomerTotalPayments, getCustomerBalance]);
+
   return (
     <div className="space-y-6" id="customer-list-container">
       <div className="print-header" style={{ display: 'none' }}>
@@ -158,35 +278,49 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
         <p>Generated on {new Date().toLocaleDateString('en-IN')}</p>
         <div className="print-stats">
           <div className="stat-item">
-            <div className="stat-value">{customers.length}</div>
+            <div className="stat-value">{stats.totalCustomers}</div>
             <div className="stat-label">Total Customers</div>
           </div>
           <div className="stat-item">
-            <div className="stat-value">{formatCurrency(customers.reduce((sum, c) => sum + c.salePrice, 0))}</div>
-            <div className="stat-label">Total Sale Value</div>
+            <div className="stat-value">{formatCurrency(stats.totalValue)}</div>
+            <div className="stat-label">Total Value</div>
           </div>
           <div className="stat-item">
-            <div className="stat-value">{formatCurrency(customers.reduce((sum, c) => sum + c.constructionPrice, 0))}</div>
-            <div className="stat-label">Construction Value</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">{formatCurrency(customerPayments.reduce((sum, p) => sum + p.amount, 0))}</div>
+            <div className="stat-value">{formatCurrency(stats.totalPaid)}</div>
             <div className="stat-label">Total Payments</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-value">{formatCurrency(stats.totalOutstanding)}</div>
+            <div className="stat-label">Outstanding</div>
           </div>
         </div>
       </div>
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center">
             <Users className="mr-3 text-blue-600" size={28} />
             Customer Master List
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              ({stats.totalCustomers} customers)
+            </span>
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-1 flex items-center">
             Manage your customers and their property details
+            <span className="ml-2 text-xs text-gray-400">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </span>
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <button
+            onClick={handleRefresh}
+            className={`flex items-center px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors ${isRefreshing ? 'animate-spin' : ''}`}
+            title="Refresh data"
+          >
+            <RefreshCw size={16} />
+          </button>
           <button
             onClick={() => handlePrint('customer-list-container')}
             className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -258,6 +392,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
               <option value="plotNumber">Sort by Plot Number</option>
               <option value="salePrice">Sort by Total Value</option>
               <option value="createdAt">Sort by Date Added</option>
+              <option value="balance">Sort by Balance</option>
             </select>
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -267,15 +402,101 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
             </button>
           </div>
         </div>
+
+        {/* Advanced Filters Toggle */}
+        <div className="flex items-center justify-between mt-4">
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <Filter size={16} className="mr-1" />
+            Advanced Filters {showAdvancedFilters ? '▲' : '▼'}
+          </button>
+          {(searchQuery || selectedProject || balanceFilter !== 'all' || minAmount || maxAmount) && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center text-red-600 hover:text-red-800 transition-colors"
+            >
+              <X size={16} className="mr-1" />
+              Clear All Filters
+            </button>
+          )}
+        </div>
+
+        {/* Advanced Filters */}
+        {showAdvancedFilters && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Balance Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Payment Status
+              </label>
+              <select
+                value={balanceFilter}
+                onChange={(e) => setBalanceFilter(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Customers</option>
+                <option value="outstanding">Outstanding Balance</option>
+                <option value="paid">Fully Paid</option>
+              </select>
+            </div>
+
+            {/* Amount Range */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Min Total Value
+              </label>
+              <input
+                type="number"
+                value={minAmount}
+                onChange={(e) => setMinAmount(e.target.value)}
+                placeholder="Min amount"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Max Total Value
+              </label>
+              <input
+                type="number"
+                value={maxAmount}
+                onChange={(e) => setMaxAmount(e.target.value)}
+                placeholder="Max amount"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Items per page */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Items per page
+              </label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Customer Stats */}
+      {/* Enhanced Customer Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Customers</p>
-              <p className="text-2xl font-bold text-gray-900">{customers.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
             </div>
             <Users className="text-blue-600" size={24} />
           </div>
@@ -284,9 +505,9 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Sale Value</p>
+              <p className="text-sm font-medium text-gray-600">Total Value</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(customers.reduce((sum, c) => sum + c.salePrice, 0))}
+                {formatCurrency(stats.totalValue)}
               </p>
             </div>
             <IndianRupee className="text-green-600" size={24} />
@@ -296,24 +517,24 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Construction Value</p>
+              <p className="text-sm font-medium text-gray-600">Total Payments</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(customers.reduce((sum, c) => sum + c.constructionPrice, 0))}
+                {formatCurrency(stats.totalPaid)}
               </p>
             </div>
-            <Building2 className="text-orange-600" size={24} />
+            <Calculator className="text-purple-600" size={24} />
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Payments</p>
+              <p className="text-sm font-medium text-gray-600">Outstanding</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(customerPayments.reduce((sum, p) => sum + p.amount, 0))}
+                {formatCurrency(stats.totalOutstanding)}
               </p>
             </div>
-            <Calculator className="text-purple-600" size={24} />
+            <IndianRupee className="text-orange-600" size={24} />
           </div>
         </div>
       </div>
@@ -374,7 +595,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCustomers.map((customer) => {
+                {paginatedCustomers.map((customer) => {
                   const project = projects.find(p => p.id === customer.projectId);
                   const totalPaid = getCustomerTotalPayments(customer.name);
                   const balance = getCustomerBalance(customer);
@@ -485,6 +706,84 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {filteredCustomers.length > 0 && totalPages > 1 && (
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+            <div className="flex items-center text-sm text-gray-700">
+              <span>
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to{' '}
+                {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} of{' '}
+                {filteredCustomers.length} customers
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                <ChevronLeft size={16} className="mr-1" />
+                Previous
+              </button>
+              
+              {/* Page Numbers */}
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else {
+                    if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-1 rounded text-sm ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                Next
+                <ChevronRight size={16} className="ml-1" />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                Last
+              </button>
+            </div>
           </div>
         )}
       </div>

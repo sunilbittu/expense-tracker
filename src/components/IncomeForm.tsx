@@ -26,19 +26,24 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
 
   useEffect(() => {
     if (incomeId) {
-      const income = getIncomeById(incomeId);
-      if (income) {
-        setFormData({
-          amount: income.amount.toString(),
-          description: income.description,
-          date: new Date(income.date).toISOString().split('T')[0],
-          source: income.source,
-          payee: income.payee || '',
-          paymentMode: income.paymentMode,
-          chequeNumber: income.chequeNumber || '',
-          transactionId: income.transactionId || '',
-        });
-      }
+      console.log('Loading income with ID:', incomeId);
+      const fetchIncome = async () => {
+        const income = await getIncomeById(incomeId);
+        console.log('Fetched income:', income);
+        if (income) {
+          setFormData({
+            amount: income.amount.toString(),
+            description: income.description,
+            date: new Date(income.date).toISOString().split('T')[0],
+            source: income.source,
+            payee: income.payee || '',
+            paymentMode: income.paymentMode,
+            chequeNumber: income.chequeNumber || '',
+            transactionId: income.transactionId || '',
+          });
+        }
+      };
+      fetchIncome();
     }
   }, [incomeId, getIncomeById]);
 
@@ -73,8 +78,10 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Submitting form with data:', formData);
+    console.log('Income ID:', incomeId);
     
     if (!validateForm()) {
       return;
@@ -91,13 +98,17 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
       transactionId: formData.paymentMode === 'online' ? formData.transactionId : undefined,
     };
 
-    if (incomeId) {
-      updateIncome(incomeId, incomeData);
-    } else {
-      addIncome(incomeData);
+    try {
+      if (incomeId) {
+        await updateIncome(incomeId, incomeData);
+      } else {
+        await addIncome(incomeData);
+      }
+      onComplete();
+    } catch (error) {
+      // Error is handled by the context, just prevent form from closing
+      console.error('Failed to save income:', error);
     }
-
-    onComplete();
   };
 
   const handleChange = (

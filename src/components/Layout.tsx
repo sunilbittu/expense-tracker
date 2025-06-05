@@ -29,11 +29,13 @@ const Layout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleEditExpense = (id: string) => {
+    console.log('Editing expense with ID:', id);
     setEditExpenseId(id);
     setActiveView('edit');
   };
 
   const handleEditIncome = (id: string) => {
+    console.log('Editing income with ID:', id);
     setEditIncomeId(id);
     setActiveView('edit-income');
   };
@@ -131,7 +133,10 @@ const Layout: React.FC = () => {
         return (
           <IncomeForm
             incomeId={editIncomeId}
-            onComplete={() => setActiveView('income')}
+            onComplete={() => {
+              setEditIncomeId(null);
+              setActiveView('income');
+            }}
           />
         );
       case 'edit-customer-payment':
