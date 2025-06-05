@@ -11,13 +11,9 @@ interface ExpenseFormProps {
 }
 
 const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
-  const { addExpense, updateExpense, expenses, projects = [], categories = [], employees = [] } = useExpenses();
+  const { addExpense, updateExpense, expenses, projects = [], categories = [], employees = [], landlords = [] } = useExpenses();
   
-  const [formData, setFormData] = useState<Omit<Expense, 'id' | 'createdAt'> & {
-    employeeId?: string;
-    salaryMonth?: string;
-    overrideSalary?: number;
-  }>({
+  const [formData, setFormData] = useState<Omit<Expense, 'id' | 'createdAt'>>({
     projectId: projects[0]?.id || '',
     amount: 0,
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -29,11 +25,16 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
     transactionId: '',
     employeeId: '',
     salaryMonth: format(new Date(), 'yyyy-MM'),
+    overrideSalary: undefined,
+    landlordId: '',
+    landPurchaseAmount: 0,
+    landDetails: '',
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const isEditMode = Boolean(expenseId);
   const isSalaryExpense = formData.category === 'office' && formData.subcategory === 'salaries';
+  const isLandPurchaseExpense = formData.category === 'construction' && formData.subcategory === 'land';
   
   useEffect(() => {
     if (expenseId) {
@@ -41,25 +42,67 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
       if (expense) {
         setFormData({
           ...expense,
-          employeeId: (expense as any).employeeId || '',
-          salaryMonth: (expense as any).salaryMonth || format(new Date(), 'yyyy-MM'),
-          overrideSalary: (expense as any).overrideSalary,
+          employeeId: expense.employeeId || '',
+          salaryMonth: expense.salaryMonth || format(new Date(), 'yyyy-MM'),
+          overrideSalary: expense.overrideSalary,
+          landlordId: expense.landlordId || '',
+          landPurchaseAmount: expense.landPurchaseAmount || 0,
+          landDetails: expense.landDetails || '',
         });
       }
     }
   }, [expenseId, expenses]);
 
+  // Auto-set salary amount when employee is selected for salary expenses
   useEffect(() => {
-    if (isSalaryExpense && formData.employeeId && !formData.overrideSalary) {
+    if (isSalaryExpense && formData.employeeId && formData.overrideSalary === undefined) {
       const selectedEmployee = employees.find(emp => emp.id === formData.employeeId);
-      if (selectedEmployee) {
+      if (selectedEmployee && selectedEmployee.salary > 0) {
         setFormData(prev => ({
           ...prev,
           amount: selectedEmployee.salary
         }));
       }
     }
-  }, [formData.employeeId, isSalaryExpense, employees]);
+  }, [formData.employeeId, isSalaryExpense, employees, formData.overrideSalary]);
+
+  // Reset employee fields when switching away from salary subcategory
+  useEffect(() => {
+    if (!isSalaryExpense) {
+      setFormData(prev => ({
+        ...prev,
+        employeeId: '',
+        salaryMonth: format(new Date(), 'yyyy-MM'),
+        overrideSalary: undefined,
+      }));
+    }
+  }, [isSalaryExpense]);
+
+  // Reset landlord fields when switching away from land purchase subcategory
+  useEffect(() => {
+    if (!isLandPurchaseExpense) {
+      setFormData(prev => ({
+        ...prev,
+        landlordId: '',
+        landPurchaseAmount: 0,
+        landDetails: '',
+      }));
+    }
+  }, [isLandPurchaseExpense]);
+
+  // Auto-set land purchase amount when landlord is selected
+  useEffect(() => {
+    if (isLandPurchaseExpense && formData.landlordId) {
+      const selectedLandlord = landlords.find(landlord => landlord.id === formData.landlordId);
+      if (selectedLandlord) {
+        setFormData(prev => ({
+          ...prev,
+          landPurchaseAmount: selectedLandlord.totalLandPrice,
+          amount: formData.landPurchaseAmount || selectedLandlord.totalLandPrice
+        }));
+      }
+    }
+  }, [formData.landlordId, isLandPurchaseExpense, landlords]);
   
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -84,7 +127,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
       newErrors.subcategory = 'Subcategory is required';
     }
     
-    if (!formData.description.trim()) {
+    if (!isSalaryExpense && !isLandPurchaseExpense && !formData.description.trim()) {
       newErrors.description = 'Description is required';
     }
 
@@ -98,10 +141,19 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
 
     if (isSalaryExpense) {
       if (!formData.employeeId) {
-        newErrors.employeeId = 'Employee is required';
+        newErrors.employeeId = 'Employee is required for salary expenses';
       }
       if (!formData.salaryMonth) {
         newErrors.salaryMonth = 'Salary month is required';
+      }
+    }
+
+    if (isLandPurchaseExpense) {
+      if (!formData.landlordId) {
+        newErrors.landlordId = 'Landlord is required for land purchase expenses';
+      }
+      if (formData.landPurchaseAmount <= 0) {
+        newErrors.landPurchaseAmount = 'Land purchase amount must be greater than zero';
       }
     }
     
@@ -120,6 +172,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
       ...formData,
       description: isSalaryExpense 
         ? `Salary payment for ${employees.find(e => e.id === formData.employeeId)?.name} - ${format(new Date(formData.salaryMonth + '-01'), 'MMMM yyyy')}`
+        : isLandPurchaseExpense
+        ? `Land purchase payment to ${landlords.find(l => l.id === formData.landlordId)?.name} - ₹${formData.landPurchaseAmount?.toLocaleString('en-IN')} ${formData.landDetails ? '- ' + formData.landDetails : ''}`
         : formData.description
     };
     
@@ -151,17 +205,44 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
         chequeNumber: value === 'cheque' ? formData.chequeNumber : '',
         transactionId: value === 'online' ? formData.transactionId : '',
       });
-    } else if (name === 'employeeId' && !formData.overrideSalary) {
+    } else if (name === 'employeeId') {
       const selectedEmployee = employees.find(emp => emp.id === value);
       setFormData({
         ...formData,
         employeeId: value,
-        amount: selectedEmployee?.salary || 0
+        // Auto-set amount only if override is not enabled and it's a salary expense
+        amount: isSalaryExpense && formData.overrideSalary === undefined 
+          ? (selectedEmployee?.salary || 0) 
+          : formData.amount
+      });
+    } else if (name === 'amount' && isSalaryExpense && formData.overrideSalary !== undefined) {
+      // Update both amount and overrideSalary when manually changing amount for salary expenses
+      const numValue = parseFloat(value) || 0;
+      setFormData({
+        ...formData,
+        amount: numValue,
+        overrideSalary: numValue,
+      });
+    } else if (name === 'landlordId') {
+      const selectedLandlord = landlords.find(landlord => landlord.id === value);
+      setFormData({
+        ...formData,
+        landlordId: value,
+        landPurchaseAmount: selectedLandlord?.totalLandPrice || 0,
+        amount: selectedLandlord?.totalLandPrice || formData.amount
+      });
+    } else if (name === 'landPurchaseAmount' && isLandPurchaseExpense) {
+      // Update both amount and landPurchaseAmount when manually changing land purchase amount
+      const numValue = parseFloat(value) || 0;
+      setFormData({
+        ...formData,
+        landPurchaseAmount: numValue,
+        amount: numValue,
       });
     } else {
       setFormData({
         ...formData,
-        [name]: name === 'amount' || name === 'overrideSalary' ? parseFloat(value) || 0 : value,
+        [name]: ['amount', 'overrideSalary', 'landPurchaseAmount'].includes(name) ? parseFloat(value) || 0 : value,
       });
     }
     
@@ -229,7 +310,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
             {/* Amount */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Amount
+                Amount {isSalaryExpense && formData.overrideSalary === undefined && (
+                  <span className="text-sm text-blue-600 font-normal">(Auto-filled from employee salary)</span>
+                )}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -245,10 +328,15 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                   placeholder="0.00"
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.amount ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  disabled={isSalaryExpense && !formData.overrideSalary}
+                  } ${isSalaryExpense && formData.overrideSalary === undefined ? 'bg-gray-100' : ''}`}
+                  disabled={isSalaryExpense && formData.overrideSalary === undefined}
                 />
               </div>
+              {isSalaryExpense && formData.overrideSalary === undefined && (
+                <p className="mt-1 text-sm text-blue-600">
+                  Amount is automatically set from selected employee's salary. Check "Override default salary amount" below to enter a custom amount.
+                </p>
+              )}
               {errors.amount && (
                 <p className="mt-1 text-sm text-red-500">{errors.amount}</p>
               )}
@@ -402,19 +490,47 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                   )}
                 </div>
 
+                {/* Show current employee salary info */}
+                {formData.employeeId && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="text-sm text-gray-600">
+                      {(() => {
+                        const employee = employees.find(emp => emp.id === formData.employeeId);
+                        return employee ? (
+                          <span>
+                            <strong>{employee.name}</strong> - Default Salary: ₹{employee.salary.toLocaleString('en-IN')}
+                          </span>
+                        ) : (
+                          'Select an employee to see salary details'
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
                 {/* Override Salary Toggle */}
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="overrideSalary"
-                    checked={Boolean(formData.overrideSalary)}
+                    checked={formData.overrideSalary !== undefined}
                     onChange={(e) => {
                       const employee = employees.find(emp => emp.id === formData.employeeId);
-                      setFormData(prev => ({
-                        ...prev,
-                        overrideSalary: e.target.checked ? (employee?.salary || 0) : undefined,
-                        amount: e.target.checked ? (employee?.salary || 0) : (employee?.salary || 0)
-                      }));
+                      if (e.target.checked) {
+                        const defaultAmount = employee?.salary || 0;
+                        setFormData(prev => ({
+                          ...prev,
+                          overrideSalary: defaultAmount,
+                          amount: defaultAmount
+                        }));
+                      } else {
+                        const defaultAmount = employee?.salary || 0;
+                        setFormData(prev => ({
+                          ...prev,
+                          overrideSalary: undefined,
+                          amount: defaultAmount
+                        }));
+                      }
                     }}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
@@ -427,7 +543,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                 {formData.overrideSalary !== undefined && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Override Amount
+                      Custom Salary Amount
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -448,10 +564,115 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                         min="0"
                         step="1000"
                         className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter custom amount"
                       />
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Landlord Details (shown only for land purchase expenses) */}
+            {isLandPurchaseExpense && (
+              <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-100">
+                <h3 className="font-medium text-green-900">Landlord Details</h3>
+                
+                {/* Landlord Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Landlord
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Users size={18} className="text-gray-400" />
+                    </div>
+                    <select
+                      name="landlordId"
+                      value={formData.landlordId}
+                      onChange={handleChange}
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                        errors.landlordId ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select a landlord</option>
+                      {landlords.map(landlord => (
+                        <option key={landlord.id} value={landlord.id}>
+                          {landlord.name} - {landlord.totalExtent} acres @ ₹{landlord.pricePerAcre.toLocaleString('en-IN')}/acre
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.landlordId && (
+                    <p className="mt-1 text-sm text-red-500">{errors.landlordId}</p>
+                  )}
+                </div>
+
+                {/* Show current landlord info */}
+                {formData.landlordId && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="text-sm text-gray-600">
+                      {(() => {
+                        const landlord = landlords.find(l => l.id === formData.landlordId);
+                        return landlord ? (
+                          <div className="space-y-1">
+                            <div><strong>{landlord.name}</strong></div>
+                            <div>Total Land: {landlord.totalExtent} acres @ ₹{landlord.pricePerAcre.toLocaleString('en-IN')}/acre</div>
+                            <div>Total Land Value: ₹{landlord.totalLandPrice.toLocaleString('en-IN')}</div>
+                            {landlord.phone && <div>Phone: {landlord.phone}</div>}
+                            {landlord.address && <div>Address: {landlord.address}</div>}
+                          </div>
+                        ) : (
+                          'Select a landlord to see details'
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Land Purchase Amount */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Amount
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <span className="text-gray-500">₹</span>
+                    </div>
+                    <input
+                      type="number"
+                      name="landPurchaseAmount"
+                      value={formData.landPurchaseAmount}
+                      onChange={handleChange}
+                      min="0"
+                      step="1000"
+                      className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                        errors.landPurchaseAmount ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Enter payment amount"
+                    />
+                  </div>
+                  {errors.landPurchaseAmount && (
+                    <p className="mt-1 text-sm text-red-500">{errors.landPurchaseAmount}</p>
+                  )}
+                  <p className="mt-1 text-sm text-green-600">
+                    This amount will also be set as the main expense amount above.
+                  </p>
+                </div>
+
+                {/* Land Details/Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Land Details/Notes
+                  </label>
+                  <textarea
+                    name="landDetails"
+                    value={formData.landDetails}
+                    onChange={handleChange}
+                    rows={2}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="Enter any additional details about this land purchase payment..."
+                  />
+                </div>
               </div>
             )}
 
@@ -525,7 +746,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
             )}
             
             {/* Description */}
-            {!isSalaryExpense && (
+            {!isSalaryExpense && !isLandPurchaseExpense && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Description

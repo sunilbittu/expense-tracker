@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Expense, Project, Category, Income, CustomerPayment, Customer, ExpenseContextType, Employee } from '../types';
+import { Expense, Project, Category, Income, CustomerPayment, Customer, ExpenseContextType, Employee, Landlord } from '../types';
 import { defaultCategories, defaultProjects } from '../data/mockData';
 import toast from 'react-hot-toast';
 
@@ -50,6 +50,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [landlords, setLandlords] = useState<Landlord[]>(() => {
+    const saved = localStorage.getItem('landlords');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
   }, [expenses]);
@@ -78,14 +83,30 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     localStorage.setItem('employees', JSON.stringify(employees));
   }, [employees]);
 
+  useEffect(() => {
+    localStorage.setItem('landlords', JSON.stringify(landlords));
+  }, [landlords]);
+
   const addExpense = (expense: Omit<Expense, 'id' | 'createdAt'>) => {
-    const newExpense = {
+    const newExpense: Expense = {
       ...expense,
       id: uuidv4(),
       createdAt: new Date().toISOString(),
     };
     setExpenses([...expenses, newExpense]);
-    toast.success('Expense added successfully');
+    
+    // Show specific success message for salary expenses
+    if (expense.category === 'office' && expense.subcategory === 'salaries' && expense.employeeId) {
+      const employee = employees.find(emp => emp.id === expense.employeeId);
+      const employeeName = employee?.name || 'Employee';
+      toast.success(`Salary expense for ${employeeName} added successfully`);
+    } else if (expense.category === 'construction' && expense.subcategory === 'land' && expense.landlordId) {
+      const landlord = landlords.find(l => l.id === expense.landlordId);
+      const landlordName = landlord?.name || 'Landlord';
+      toast.success(`Land purchase payment to ${landlordName} added successfully`);
+    } else {
+      toast.success('Expense added successfully');
+    }
   };
 
   const updateExpense = (id: string, expense: Omit<Expense, 'id' | 'createdAt'>) => {
@@ -98,7 +119,19 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         : exp
     );
     setExpenses(updatedExpenses);
-    toast.success('Expense updated successfully');
+    
+    // Show specific success message for salary expenses
+    if (expense.category === 'office' && expense.subcategory === 'salaries' && expense.employeeId) {
+      const employee = employees.find(emp => emp.id === expense.employeeId);
+      const employeeName = employee?.name || 'Employee';
+      toast.success(`Salary expense for ${employeeName} updated successfully`);
+    } else if (expense.category === 'construction' && expense.subcategory === 'land' && expense.landlordId) {
+      const landlord = landlords.find(l => l.id === expense.landlordId);
+      const landlordName = landlord?.name || 'Landlord';
+      toast.success(`Land purchase payment to ${landlordName} updated successfully`);
+    } else {
+      toast.success('Expense updated successfully');
+    }
   };
 
   const deleteExpense = (id: string) => {
@@ -292,6 +325,42 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return employees.find((employee) => employee.id === id);
   };
 
+  const addLandlord = (landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => {
+    const totalLandPrice = landlord.pricePerAcre * landlord.totalExtent;
+    const newLandlord: Landlord = {
+      ...landlord,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      totalLandPrice,
+    };
+    setLandlords([...landlords, newLandlord]);
+    toast.success('Landlord added successfully');
+  };
+
+  const updateLandlord = (id: string, landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => {
+    const totalLandPrice = landlord.pricePerAcre * landlord.totalExtent;
+    const updatedLandlords = landlords.map((land) =>
+      land.id === id
+        ? {
+            ...land,
+            ...landlord,
+            totalLandPrice,
+          }
+        : land
+    );
+    setLandlords(updatedLandlords);
+    toast.success('Landlord updated successfully');
+  };
+
+  const deleteLandlord = (id: string) => {
+    setLandlords(landlords.filter((landlord) => landlord.id !== id));
+    toast.success('Landlord deleted successfully');
+  };
+
+  const getLandlordById = (id: string) => {
+    return landlords.find((landlord) => landlord.id === id);
+  };
+
   const value: ExpenseContextType = {
     expenses,
     incomes,
@@ -300,6 +369,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     projects,
     categories,
     employees,
+    landlords,
     addExpense,
     updateExpense,
     deleteExpense,
@@ -325,6 +395,10 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateEmployee,
     deleteEmployee,
     getEmployeeById,
+    addLandlord,
+    updateLandlord,
+    deleteLandlord,
+    getLandlordById,
   };
 
   return (

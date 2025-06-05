@@ -101,6 +101,12 @@ export type Expense = {
   paymentMode: PaymentMode;
   chequeNumber?: string;
   transactionId?: string;
+  employeeId?: string;
+  salaryMonth?: string;
+  overrideSalary?: number;
+  landlordId?: string;
+  landPurchaseAmount?: number;
+  landDetails?: string;
 };
 
 export type ExpenseContextType = {
@@ -109,6 +115,7 @@ export type ExpenseContextType = {
   customerPayments: CustomerPayment[];
   customers: Customer[];
   employees: Employee[];
+  landlords: Landlord[];
   projects: Project[];
   categories: Category[];
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
@@ -130,6 +137,10 @@ export type ExpenseContextType = {
   updateEmployee: (id: string, employee: Omit<Employee, 'id' | 'createdAt'>) => void;
   deleteEmployee: (id: string) => void;
   getEmployeeById: (id: string) => Employee | undefined;
+  addLandlord: (landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => void;
+  updateLandlord: (id: string, landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => void;
+  deleteLandlord: (id: string) => void;
+  getLandlordById: (id: string) => Landlord | undefined;
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (id: string, project: Omit<Project, 'id'>) => void;
   deleteProject: (id: string) => void;
@@ -138,7 +149,7 @@ export type ExpenseContextType = {
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'employees' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'add-employee' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer' | 'edit-employee';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'employees' | 'landlords' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'add-employee' | 'add-landlord' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer' | 'edit-employee' | 'edit-landlord';
 
 export type FilterOptions = {
   project: string;
@@ -149,4 +160,18 @@ export type FilterOptions = {
   searchQuery: string;
   paymentMode?: PaymentMode;
   paymentCategory?: PaymentCategory;
+};
+
+export type Landlord = {
+  id: string;
+  name: string;
+  amount: number; // Advance or initial amount paid
+  pricePerAcre: number;
+  totalExtent: number; // Total acres
+  totalLandPrice: number; // Auto-calculated: pricePerAcre * totalExtent
+  phone?: string;
+  address?: string;
+  email?: string;
+  createdAt: string;
+  status: 'active' | 'inactive';
 };

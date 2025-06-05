@@ -7,7 +7,8 @@ import {
   LogOut,
   DollarSign,
   Users,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Landmark
 } from 'lucide-react';
 import { ActiveView } from '../types';
 
@@ -24,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
     { id: 'customer-payments', label: 'Customer Payments', icon: <Users size={20} /> },
     { id: 'customers', label: 'Customers', icon: <Users size={20} /> },
     { id: 'employees', label: 'Employees', icon: <Users size={20} /> },
+    { id: 'landlords', label: 'Landlords', icon: <Landmark size={20} /> },
     { id: 'projects', label: 'Projects', icon: <Briefcase size={20} /> },
     { id: 'reports', label: 'Reports', icon: <FileSpreadsheet size={20} /> },
   ];

@@ -11,10 +11,12 @@ import ExpenseForm from './ExpenseForm';
 import IncomeForm from './IncomeForm';
 import CustomerPaymentForm from './CustomerPaymentForm';
 import CustomerForm from './CustomerForm';
-import { ActiveView } from '../types';
-import { Menu, X } from 'lucide-react';
 import EmployeeList from './EmployeeList';
 import EmployeeForm from './EmployeeForm';
+import LandlordList from './LandlordList';
+import LandlordForm from './LandlordForm';
+import { ActiveView } from '../types';
+import { Menu, X } from 'lucide-react';
 
 const Layout: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
@@ -23,6 +25,7 @@ const Layout: React.FC = () => {
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
   const [editCustomerId, setEditCustomerId] = useState<string | null>(null);
   const [editEmployeeId, setEditEmployeeId] = useState<string | null>(null);
+  const [editLandlordId, setEditLandlordId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleEditExpense = (id: string) => {
@@ -50,16 +53,36 @@ const Layout: React.FC = () => {
     setActiveView('edit-employee');
   };
 
+  const handleEditLandlord = (id: string) => {
+    setEditLandlordId(id);
+    setActiveView('edit-landlord');
+  };
+
   const renderActiveView = () => {
     switch (activeView) {
       case 'dashboard':
         return <Dashboard />;
       case 'expenses':
-        return <ExpenseList onEditExpense={handleEditExpense} />;
+        return (
+          <ExpenseList 
+            onEditExpense={handleEditExpense}
+            onAddExpense={() => setActiveView('add')}
+          />
+        );
       case 'income':
-        return <IncomeList onEditIncome={handleEditIncome} />;
+        return (
+          <IncomeList 
+            onEditIncome={handleEditIncome}
+            onAddIncome={() => setActiveView('add-income')}
+          />
+        );
       case 'customer-payments':
-        return <CustomerPaymentList onEditPayment={handleEditPayment} />;
+        return (
+          <CustomerPaymentList 
+            onEditPayment={handleEditPayment}
+            onAddPayment={() => setActiveView('add-customer-payment')}
+          />
+        );
       case 'customers':
         return (
           <CustomerList 
@@ -78,6 +101,13 @@ const Layout: React.FC = () => {
             onAddEmployee={() => setActiveView('add-employee')}
           />
         );
+      case 'landlords':
+        return (
+          <LandlordList 
+            onEditLandlord={handleEditLandlord}
+            onAddLandlord={() => setActiveView('add-landlord')}
+          />
+        );
       case 'add':
         return <ExpenseForm onComplete={() => setActiveView('expenses')} />;
       case 'add-income':
@@ -88,6 +118,8 @@ const Layout: React.FC = () => {
         return <CustomerForm onComplete={() => setActiveView('customers')} />;
       case 'add-employee':
         return <EmployeeForm onComplete={() => setActiveView('employees')} />;
+      case 'add-landlord':
+        return <LandlordForm onComplete={() => setActiveView('landlords')} />;
       case 'edit':
         return (
           <ExpenseForm
@@ -121,6 +153,13 @@ const Layout: React.FC = () => {
           <EmployeeForm
             employeeId={editEmployeeId}
             onComplete={() => setActiveView('employees')}
+          />
+        );
+      case 'edit-landlord':
+        return (
+          <LandlordForm
+            landlordId={editLandlordId}
+            onComplete={() => setActiveView('landlords')}
           />
         );
       default:
