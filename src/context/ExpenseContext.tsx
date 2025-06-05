@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Expense, Project, Category, Income, CustomerPayment, Customer, ExpenseContextType } from '../types';
+import { Expense, Project, Category, Income, CustomerPayment, Customer, ExpenseContextType, Employee } from '../types';
 import { defaultCategories, defaultProjects } from '../data/mockData';
 import toast from 'react-hot-toast';
 
@@ -45,6 +45,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved ? JSON.parse(saved) : defaultCategories;
   });
 
+  const [employees, setEmployees] = useState<Employee[]>(() => {
+    const saved = localStorage.getItem('employees');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
   }, [expenses]);
@@ -68,6 +73,10 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem('categories', JSON.stringify(categories));
   }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('employees', JSON.stringify(employees));
+  }, [employees]);
 
   const addExpense = (expense: Omit<Expense, 'id' | 'createdAt'>) => {
     const newExpense = {
@@ -251,6 +260,38 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return category?.subcategories.find((subcategory) => subcategory.id === subcategoryId);
   };
 
+  const addEmployee = (employee: Omit<Employee, 'id' | 'createdAt'>) => {
+    const newEmployee = {
+      ...employee,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+    };
+    setEmployees([...employees, newEmployee]);
+    toast.success('Employee added successfully');
+  };
+
+  const updateEmployee = (id: string, employee: Omit<Employee, 'id' | 'createdAt'>) => {
+    const updatedEmployees = employees.map((emp) =>
+      emp.id === id
+        ? {
+            ...emp,
+            ...employee,
+          }
+        : emp
+    );
+    setEmployees(updatedEmployees);
+    toast.success('Employee updated successfully');
+  };
+
+  const deleteEmployee = (id: string) => {
+    setEmployees(employees.filter((employee) => employee.id !== id));
+    toast.success('Employee deleted successfully');
+  };
+
+  const getEmployeeById = (id: string) => {
+    return employees.find((employee) => employee.id === id);
+  };
+
   const value: ExpenseContextType = {
     expenses,
     incomes,
@@ -258,6 +299,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     customers,
     projects,
     categories,
+    employees,
     addExpense,
     updateExpense,
     deleteExpense,
@@ -279,6 +321,10 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     getProjectById,
     getCategoryById,
     getSubCategoryById,
+    addEmployee,
+    updateEmployee,
+    deleteEmployee,
+    getEmployeeById,
   };
 
   return (
