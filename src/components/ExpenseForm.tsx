@@ -629,35 +629,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
                   </div>
                 )}
 
-                {/* Land Purchase Amount */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Payment Amount
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <span className="text-gray-500">₹</span>
-                    </div>
-                    <input
-                      type="number"
-                      name="landPurchaseAmount"
-                      value={formData.landPurchaseAmount}
-                      onChange={handleChange}
-                      min="0"
-                      step="1000"
-                      className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        errors.landPurchaseAmount ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter payment amount"
-                    />
-                  </div>
-                  {errors.landPurchaseAmount && (
-                    <p className="mt-1 text-sm text-red-500">{errors.landPurchaseAmount}</p>
-                  )}
-                  <p className="mt-1 text-sm text-green-600">
-                    This amount will also be set as the main expense amount above.
-                  </p>
-                </div>
 
                 {/* Land Details/Notes */}
                 <div>

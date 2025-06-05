@@ -86,10 +86,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     if (formData.plotSize <= 0) {
       newErrors.plotSize = 'Plot size must be greater than zero';
     }
-
-    if (formData.builtUpArea <= 0) {
-      newErrors.builtUpArea = 'Built-up area must be greater than zero';
-    }
     
     if (!formData.projectId) {
       newErrors.projectId = 'Project is required';
@@ -97,10 +93,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     
     if (formData.pricePerYard <= 0) {
       newErrors.pricePerYard = 'Price per yard must be greater than zero';
-    }
-    
-    if (formData.constructionPricePerSqft <= 0) {
-      newErrors.constructionPricePerSqft = 'Construction price per sqft must be greater than zero';
     }
     
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -111,20 +103,24 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
     
-    if (customerId) {
-      updateCustomer(customerId, formData);
-    } else {
-      addCustomer(formData);
+    try {
+      if (customerId) {
+        await updateCustomer(customerId, formData);
+      } else {
+        await addCustomer(formData);
+      }
+      onComplete();
+    } catch (error) {
+      // Error is already handled in the context with toast
+      console.error('Error submitting customer form:', error);
     }
-    
-    onComplete();
   };
   
   const handleChange = (
