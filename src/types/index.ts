@@ -75,6 +75,20 @@ export type Customer = {
   address?: string;
 };
 
+export type Employee = {
+  id: string;
+  employeeId: string;
+  name: string;
+  jobTitle: string;
+  salary: number;
+  phone: string;
+  address: string;
+  createdAt: string;
+  email?: string;
+  joiningDate: string;
+  status: 'active' | 'inactive';
+};
+
 export type Expense = {
   id: string;
   projectId: string;
@@ -94,6 +108,7 @@ export type ExpenseContextType = {
   incomes: Income[];
   customerPayments: CustomerPayment[];
   customers: Customer[];
+  employees: Employee[];
   projects: Project[];
   categories: Category[];
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
@@ -111,6 +126,10 @@ export type ExpenseContextType = {
   updateCustomer: (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => void;
   deleteCustomer: (id: string) => void;
   getCustomerById: (id: string) => Customer | undefined;
+  addEmployee: (employee: Omit<Employee, 'id' | 'createdAt'>) => void;
+  updateEmployee: (id: string, employee: Omit<Employee, 'id' | 'createdAt'>) => void;
+  deleteEmployee: (id: string) => void;
+  getEmployeeById: (id: string) => Employee | undefined;
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (id: string, project: Omit<Project, 'id'>) => void;
   deleteProject: (id: string) => void;
@@ -119,7 +138,7 @@ export type ExpenseContextType = {
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'employees' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'add-employee' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer' | 'edit-employee';
 
 export type FilterOptions = {
   project: string;
