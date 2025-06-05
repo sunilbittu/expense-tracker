@@ -15,6 +15,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     name: '',
     plotNumber: '',
     plotSize: 0,
+    builtUpArea: 0,
     projectId: projects[0]?.id || '',
     salePrice: 0,
     pricePerYard: 0,
@@ -35,6 +36,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
           name: customer.name,
           plotNumber: customer.plotNumber,
           plotSize: customer.plotSize,
+          builtUpArea: customer.builtUpArea,
           projectId: customer.projectId,
           salePrice: customer.salePrice,
           pricePerYard: customer.pricePerYard,
@@ -58,6 +60,17 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
       }));
     }
   }, [formData.plotSize, formData.pricePerYard]);
+
+  // Auto-calculate construction price when built-up area or construction price per sqft changes
+  useEffect(() => {
+    if (formData.builtUpArea > 0 && formData.constructionPricePerSqft > 0) {
+      const calculatedConstructionPrice = formData.builtUpArea * formData.constructionPricePerSqft;
+      setFormData(prev => ({
+        ...prev,
+        constructionPrice: calculatedConstructionPrice
+      }));
+    }
+  }, [formData.builtUpArea, formData.constructionPricePerSqft]);
   
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -73,6 +86,10 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     if (formData.plotSize <= 0) {
       newErrors.plotSize = 'Plot size must be greater than zero';
     }
+
+    if (formData.builtUpArea <= 0) {
+      newErrors.builtUpArea = 'Built-up area must be greater than zero';
+    }
     
     if (!formData.projectId) {
       newErrors.projectId = 'Project is required';
@@ -80,10 +97,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     
     if (formData.pricePerYard <= 0) {
       newErrors.pricePerYard = 'Price per yard must be greater than zero';
-    }
-    
-    if (formData.constructionPrice <= 0) {
-      newErrors.constructionPrice = 'Construction price must be greater than zero';
     }
     
     if (formData.constructionPricePerSqft <= 0) {
@@ -121,7 +134,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes('Price') || name.includes('price') || name === 'plotSize'
+      [name]: name.includes('Price') || name.includes('price') || name === 'plotSize' || name === 'builtUpArea'
         ? parseFloat(value) || 0
         : value
     }));
@@ -249,6 +262,28 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               )}
             </div>
 
+            {/* Built-up Area */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Built-up Area (sq ft)
+              </label>
+              <input
+                type="number"
+                name="builtUpArea"
+                value={formData.builtUpArea}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.builtUpArea ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter built-up area"
+              />
+              {errors.builtUpArea && (
+                <p className="mt-1 text-sm text-red-500">{errors.builtUpArea}</p>
+              )}
+            </div>
+
             {/* Price Per Yard */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -286,28 +321,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               />
             </div>
 
-            {/* Construction Price */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Construction Price
-              </label>
-              <input
-                type="number"
-                name="constructionPrice"
-                value={formData.constructionPrice}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.constructionPrice ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter construction price"
-              />
-              {errors.constructionPrice && (
-                <p className="mt-1 text-sm text-red-500">{errors.constructionPrice}</p>
-              )}
-            </div>
-
             {/* Construction Price Per Sqft */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -328,6 +341,21 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               {errors.constructionPricePerSqft && (
                 <p className="mt-1 text-sm text-red-500">{errors.constructionPricePerSqft}</p>
               )}
+            </div>
+
+            {/* Construction Price (Auto-calculated) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Construction Price (Auto-calculated)
+              </label>
+              <input
+                type="number"
+                name="constructionPrice"
+                value={formData.constructionPrice}
+                readOnly
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                placeholder="Auto-calculated"
+              />
             </div>
 
             {/* Phone */}

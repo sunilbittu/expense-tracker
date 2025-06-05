@@ -63,6 +63,7 @@ export type Customer = {
   name: string;
   plotNumber: string;
   plotSize: number;
+  builtUpArea: number;
   projectId: string;
   salePrice: number;
   pricePerYard: number;
