@@ -14,6 +14,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
   const [formData, setFormData] = useState<Omit<Customer, 'id' | 'createdAt'>>({
     name: '',
     plotNumber: '',
+    plotSize: 0,
     projectId: projects[0]?.id || '',
     salePrice: 0,
     pricePerYard: 0,
@@ -33,6 +34,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
         setFormData({
           name: customer.name,
           plotNumber: customer.plotNumber,
+          plotSize: customer.plotSize,
           projectId: customer.projectId,
           salePrice: customer.salePrice,
           pricePerYard: customer.pricePerYard,
@@ -55,6 +57,10 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     
     if (!formData.plotNumber.trim()) {
       newErrors.plotNumber = 'Plot number is required';
+    }
+
+    if (formData.plotSize <= 0) {
+      newErrors.plotSize = 'Plot size must be greater than zero';
     }
     
     if (!formData.projectId) {
@@ -108,7 +114,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
     
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes('Price') || name.includes('price')
+      [name]: name.includes('Price') || name.includes('price') || name === 'plotSize'
         ? parseFloat(value) || 0
         : value
     }));
@@ -211,6 +217,28 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
               />
               {errors.plotNumber && (
                 <p className="mt-1 text-sm text-red-500">{errors.plotNumber}</p>
+              )}
+            </div>
+
+            {/* Plot Size */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Plot Size (sq yards)
+              </label>
+              <input
+                type="number"
+                name="plotSize"
+                value={formData.plotSize}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.plotSize ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter plot size"
+              />
+              {errors.plotSize && (
+                <p className="mt-1 text-sm text-red-500">{errors.plotSize}</p>
               )}
             </div>
 

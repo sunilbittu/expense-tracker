@@ -202,6 +202,9 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
                       Plot Number
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Plot Size
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Sale Price
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -258,6 +261,9 @@ const CustomerList: React.FC<CustomerListProps> = ({ onEditCustomer, onAddCustom
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {customer.plotNumber}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                        {customer.plotSize} sq yards
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
                         {formatCurrency(customer.salePrice)}
