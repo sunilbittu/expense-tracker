@@ -25,6 +25,7 @@ const incomeRoutes = require('./routes/incomes');
 const customerRoutes = require('./routes/customers');
 const projectRoutes = require('./routes/projects');
 const categoryRoutes = require('./routes/categories');
+const landlordRoutes = require('./routes/landlords');
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -33,6 +34,7 @@ app.use('/api/incomes', incomeRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/landlords', landlordRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -44,4 +46,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-}); 
+});
