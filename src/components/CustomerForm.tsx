@@ -274,8 +274,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerId, onComplete }) =
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.builtUpArea ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-blue-900 text-white placeholder-blue-200 ${
+                  errors.builtUpArea ? 'border-red-500' : 'border-blue-700'
                 }`}
                 placeholder="Enter built-up area"
               />
