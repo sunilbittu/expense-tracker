@@ -58,6 +58,21 @@ export type CustomerPayment = {
   constructionCharges: number;
 };
 
+export type Customer = {
+  id: string;
+  name: string;
+  plotNumber: string;
+  projectId: string;
+  salePrice: number;
+  pricePerYard: number;
+  constructionPrice: number;
+  constructionPricePerSqft: number;
+  createdAt: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+};
+
 export type Expense = {
   id: string;
   projectId: string;
@@ -76,6 +91,7 @@ export type ExpenseContextType = {
   expenses: Expense[];
   incomes: Income[];
   customerPayments: CustomerPayment[];
+  customers: Customer[];
   projects: Project[];
   categories: Category[];
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
@@ -89,6 +105,10 @@ export type ExpenseContextType = {
   updateCustomerPayment: (id: string, payment: Omit<CustomerPayment, 'id' | 'createdAt'>) => void;
   deleteCustomerPayment: (id: string) => void;
   getCustomerPaymentById: (id: string) => CustomerPayment | undefined;
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => void;
+  updateCustomer: (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => void;
+  deleteCustomer: (id: string) => void;
+  getCustomerById: (id: string) => Customer | undefined;
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (id: string, project: Omit<Project, 'id'>) => void;
   deleteProject: (id: string) => void;
@@ -97,7 +117,7 @@ export type ExpenseContextType = {
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'add' | 'add-income' | 'add-customer-payment' | 'edit' | 'edit-income' | 'edit-customer-payment';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer';
 
 export type FilterOptions = {
   project: string;

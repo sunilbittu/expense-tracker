@@ -22,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
     { id: 'expenses', label: 'Expenses', icon: <Receipt size={20} /> },
     { id: 'income', label: 'Income', icon: <DollarSign size={20} /> },
     { id: 'customer-payments', label: 'Customer Payments', icon: <Users size={20} /> },
+    { id: 'customers', label: 'Customers', icon: <Users size={20} /> },
     { id: 'projects', label: 'Projects', icon: <Briefcase size={20} /> },
     { id: 'reports', label: 'Reports', icon: <FileSpreadsheet size={20} /> },
   ];

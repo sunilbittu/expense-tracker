@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Expense, Project, Category, Income, CustomerPayment, ExpenseContextType } from '../types';
+import { Expense, Project, Category, Income, CustomerPayment, Customer, ExpenseContextType } from '../types';
 import { defaultCategories, defaultProjects } from '../data/mockData';
 import toast from 'react-hot-toast';
 
@@ -30,6 +30,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    const saved = localStorage.getItem('customers');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [projects, setProjects] = useState<Project[]>(() => {
     const saved = localStorage.getItem('projects');
     return saved ? JSON.parse(saved) : defaultProjects;
@@ -51,6 +56,10 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem('customerPayments', JSON.stringify(customerPayments));
   }, [customerPayments]);
+
+  useEffect(() => {
+    localStorage.setItem('customers', JSON.stringify(customers));
+  }, [customers]);
 
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
@@ -152,6 +161,48 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return customerPayments.find((payment) => payment.id === id);
   };
 
+  const addCustomer = (customer: Omit<Customer, 'id' | 'createdAt'>) => {
+    const newCustomer = {
+      ...customer,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+    };
+    setCustomers([...customers, newCustomer]);
+    toast.success('Customer added successfully');
+  };
+
+  const updateCustomer = (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => {
+    const updatedCustomers = customers.map((cust) =>
+      cust.id === id
+        ? {
+            ...cust,
+            ...customer,
+          }
+        : cust
+    );
+    setCustomers(updatedCustomers);
+    toast.success('Customer updated successfully');
+  };
+
+  const deleteCustomer = (id: string) => {
+    // Check if customer has any payments
+    const hasPayments = customerPayments.some(payment => 
+      payment.customerName === customers.find(c => c.id === id)?.name
+    );
+    
+    if (hasPayments) {
+      toast.error('Cannot delete customer with existing payments');
+      return;
+    }
+    
+    setCustomers(customers.filter((customer) => customer.id !== id));
+    toast.success('Customer deleted successfully');
+  };
+
+  const getCustomerById = (id: string) => {
+    return customers.find((customer) => customer.id === id);
+  };
+
   const addProject = (project: Omit<Project, 'id'>) => {
     const newProject = {
       ...project,
@@ -204,6 +255,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     expenses,
     incomes,
     customerPayments,
+    customers,
     projects,
     categories,
     addExpense,
@@ -217,6 +269,10 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateCustomerPayment,
     deleteCustomerPayment,
     getCustomerPaymentById,
+    addCustomer,
+    updateCustomer,
+    deleteCustomer,
+    getCustomerById,
     addProject,
     updateProject,
     deleteProject,

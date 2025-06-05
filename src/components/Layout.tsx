@@ -4,11 +4,13 @@ import Dashboard from './Dashboard';
 import ExpenseList from './ExpenseList';
 import IncomeList from './IncomeList';
 import CustomerPaymentList from './CustomerPaymentList';
+import CustomerList from './CustomerList';
 import ProjectList from './ProjectList';
 import Reports from './Reports';
 import ExpenseForm from './ExpenseForm';
 import IncomeForm from './IncomeForm';
 import CustomerPaymentForm from './CustomerPaymentForm';
+import CustomerForm from './CustomerForm';
 import { ActiveView } from '../types';
 import { Menu, X } from 'lucide-react';
 
@@ -17,6 +19,7 @@ const Layout: React.FC = () => {
   const [editExpenseId, setEditExpenseId] = useState<string | null>(null);
   const [editIncomeId, setEditIncomeId] = useState<string | null>(null);
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
+  const [editCustomerId, setEditCustomerId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleEditExpense = (id: string) => {
@@ -34,6 +37,11 @@ const Layout: React.FC = () => {
     setActiveView('edit-customer-payment');
   };
 
+  const handleEditCustomer = (id: string) => {
+    setEditCustomerId(id);
+    setActiveView('edit-customer');
+  };
+
   const renderActiveView = () => {
     switch (activeView) {
       case 'dashboard':
@@ -44,6 +52,13 @@ const Layout: React.FC = () => {
         return <IncomeList onEditIncome={handleEditIncome} />;
       case 'customer-payments':
         return <CustomerPaymentList onEditPayment={handleEditPayment} />;
+      case 'customers':
+        return (
+          <CustomerList 
+            onEditCustomer={handleEditCustomer}
+            onAddCustomer={() => setActiveView('add-customer')}
+          />
+        );
       case 'projects':
         return <ProjectList />;
       case 'reports':
@@ -54,6 +69,8 @@ const Layout: React.FC = () => {
         return <IncomeForm onComplete={() => setActiveView('income')} />;
       case 'add-customer-payment':
         return <CustomerPaymentForm onComplete={() => setActiveView('customer-payments')} />;
+      case 'add-customer':
+        return <CustomerForm onComplete={() => setActiveView('customers')} />;
       case 'edit':
         return (
           <ExpenseForm
@@ -73,6 +90,13 @@ const Layout: React.FC = () => {
           <CustomerPaymentForm
             paymentId={editPaymentId}
             onComplete={() => setActiveView('customer-payments')}
+          />
+        );
+      case 'edit-customer':
+        return (
+          <CustomerForm
+            customerId={editCustomerId}
+            onComplete={() => setActiveView('customers')}
           />
         );
       default:
