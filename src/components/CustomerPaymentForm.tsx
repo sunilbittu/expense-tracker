@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 import { PaymentCategory } from '../types';
 import { ArrowLeft, Building2, Users, Receipt } from 'lucide-react';
 
 const CustomerPaymentForm = () => {
-  const { addCustomerPayment } = useExpenses();
+  const { addCustomerPayment, customers, projects } = useExpenses();
   const [formData, setFormData] = useState({
+    customerId: '',
     customerName: '',
     amount: '',
     paymentDate: '',
@@ -19,6 +20,23 @@ const CustomerPaymentForm = () => {
     constructionCharges: '',
     projectId: '',
   });
+
+  // Auto-fill customer details when a customer is selected
+  useEffect(() => {
+    if (formData.customerId) {
+      const selectedCustomer = customers.find(c => c.id === formData.customerId);
+      if (selectedCustomer) {
+        setFormData(prev => ({
+          ...prev,
+          customerName: selectedCustomer.name,
+          plotNumber: selectedCustomer.plotNumber,
+          projectId: selectedCustomer.projectId,
+          totalPrice: selectedCustomer.salePrice.toString(),
+          constructionCharges: selectedCustomer.constructionPrice.toString(),
+        }));
+      }
+    }
+  }, [formData.customerId, customers]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +52,7 @@ const CustomerPaymentForm = () => {
       date: formData.paymentDate
     });
     setFormData({
+      customerId: '',
       customerName: '',
       amount: '',
       paymentDate: '',
@@ -70,18 +89,46 @@ const CustomerPaymentForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
       <div>
-        <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">
-          Customer Name
+        <label htmlFor="customerId" className="block text-sm font-medium text-gray-700">
+          Select Customer
         </label>
-        <input
-          type="text"
-          id="customerName"
-          name="customerName"
-          value={formData.customerName}
+        <select
+          id="customerId"
+          name="customerId"
+          value={formData.customerId}
           onChange={handleChange}
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
+        >
+          <option value="">Select a customer</option>
+          {customers.map(customer => (
+            <option key={customer.id} value={customer.id}>
+              {customer.name} - Plot {customer.plotNumber}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="projectId" className="block text-sm font-medium text-gray-700">
+          Project
+        </label>
+        <select
+          id="projectId"
+          name="projectId"
+          value={formData.projectId}
+          onChange={handleChange}
+          required
+          disabled
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed"
+        >
+          <option value="">Select a project</option>
+          {projects.map(project => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
@@ -93,10 +140,8 @@ const CustomerPaymentForm = () => {
           id="plotNumber"
           name="plotNumber"
           value={formData.plotNumber}
-          onChange={handleChange}
-          required
-          placeholder="Enter plot number"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          disabled
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed"
         />
       </div>
 
@@ -129,11 +174,8 @@ const CustomerPaymentForm = () => {
           id="totalPrice"
           name="totalPrice"
           value={formData.totalPrice}
-          onChange={handleChange}
-          required
-          min="0"
-          step="0.01"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          disabled
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed"
         />
       </div>
 
@@ -197,11 +239,8 @@ const CustomerPaymentForm = () => {
           id="constructionCharges"
           name="constructionCharges"
           value={formData.constructionCharges}
-          onChange={handleChange}
-          required
-          min="0"
-          step="0.01"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          disabled
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed"
         />
       </div>
 
