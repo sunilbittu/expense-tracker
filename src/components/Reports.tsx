@@ -107,10 +107,8 @@ const Reports: React.FC = () => {
     return data;
   }, [reportType, timeRange, projectFilter, categoryFilter, startDate, endDate, expenses, incomes, customerPayments]);
 
-  // Calculate summaries
   const summaryData = useMemo(() => {
     if (reportType === 'expenses') {
-      // Group by category
       const categoryTotals = {};
       const subcategoryTotals = {};
       
@@ -130,26 +128,30 @@ const Reports: React.FC = () => {
         subcategoryTotals
       };
     } else if (reportType === 'income') {
-      // Group by payee
       const payeeTotals = {};
+      const sourceTotals = {};
       filteredData.forEach(income => {
         payeeTotals[income.payee] = (payeeTotals[income.payee] || 0) + income.amount;
+        sourceTotals[income.source] = (sourceTotals[income.source] || 0) + income.amount;
       });
 
       return {
         total: filteredData.reduce((sum, item) => sum + item.amount, 0),
-        payeeTotals
+        payeeTotals,
+        sourceTotals
       };
     } else {
-      // Group by customer
       const customerTotals = {};
+      const categoryTotals = {};
       filteredData.forEach(payment => {
         customerTotals[payment.customerName] = (customerTotals[payment.customerName] || 0) + payment.amount;
+        categoryTotals[payment.paymentCategory] = (categoryTotals[payment.paymentCategory] || 0) + payment.amount;
       });
 
       return {
         total: filteredData.reduce((sum, item) => sum + item.amount, 0),
-        customerTotals
+        customerTotals,
+        categoryTotals
       };
     }
   }, [filteredData, reportType, categories]);
@@ -157,7 +159,6 @@ const Reports: React.FC = () => {
   const downloadReport = () => {
     const workbook = XLSX.utils.book_new();
 
-    // Create summary sheet
     const summaryData = [
       ['Report Type', reportType.toUpperCase()],
       ['Period', `${format(parseISO(getDateRange().start), 'dd/MM/yyyy')} to ${format(parseISO(getDateRange().end), 'dd/MM/yyyy')}`],
@@ -166,7 +167,6 @@ const Reports: React.FC = () => {
     ];
 
     if (reportType === 'expenses') {
-      // Add category breakdown
       summaryData.push(['Category Breakdown']);
       summaryData.push(['Category', 'Amount', 'Percentage']);
       Object.entries(summaryData.categoryTotals).forEach(([category, amount]) => {
@@ -177,7 +177,6 @@ const Reports: React.FC = () => {
         ]);
       });
 
-      // Add subcategory breakdown
       summaryData.push([''], ['Subcategory Breakdown']);
       summaryData.push(['Category', 'Subcategory', 'Amount', 'Percentage']);
       Object.entries(summaryData.subcategoryTotals).forEach(([key, amount]) => {
@@ -190,7 +189,6 @@ const Reports: React.FC = () => {
         ]);
       });
     } else if (reportType === 'income') {
-      // Add payee breakdown
       summaryData.push(['Payee Breakdown']);
       summaryData.push(['Payee', 'Amount', 'Percentage']);
       Object.entries(summaryData.payeeTotals).forEach(([payee, amount]) => {
@@ -200,8 +198,17 @@ const Reports: React.FC = () => {
           `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
         ]);
       });
+
+      summaryData.push([''], ['Source Breakdown']);
+      summaryData.push(['Source', 'Amount', 'Percentage']);
+      Object.entries(summaryData.sourceTotals).forEach(([source, amount]) => {
+        summaryData.push([
+          source,
+          formatCurrency(amount as number),
+          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+        ]);
+      });
     } else {
-      // Add customer breakdown
       summaryData.push(['Customer Breakdown']);
       summaryData.push(['Customer', 'Amount', 'Percentage']);
       Object.entries(summaryData.customerTotals).forEach(([customer, amount]) => {
@@ -211,13 +218,21 @@ const Reports: React.FC = () => {
           `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
         ]);
       });
+
+      summaryData.push([''], ['Payment Category Breakdown']);
+      summaryData.push(['Category', 'Amount', 'Percentage']);
+      Object.entries(summaryData.categoryTotals).forEach(([category, amount]) => {
+        summaryData.push([
+          category,
+          formatCurrency(amount as number),
+          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+        ]);
+      });
     }
 
-    // Add summary sheet
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    // Add detailed transactions sheet
     const detailsData = filteredData.map(item => {
       const baseData = {
         Date: format(parseISO(item.date), 'dd/MM/yyyy'),
@@ -258,10 +273,7 @@ const Reports: React.FC = () => {
     const detailsSheet = XLSX.utils.json_to_sheet(detailsData);
     XLSX.utils.book_append_sheet(workbook, detailsSheet, 'Details');
 
-    // Generate filename with timestamp
     const fileName = `${reportType}-report-${format(new Date(), 'dd-MM-yyyy')}.xlsx`;
-
-    // Write the workbook to file
     XLSX.writeFile(workbook, fileName);
   };
 
@@ -402,7 +414,6 @@ const Reports: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {reportType === 'expenses' && (
           <>
@@ -439,6 +450,20 @@ const Reports: React.FC = () => {
                 </p>
               </div>
             ))}
+            {Object.entries(summaryData.sourceTotals).map(([source, amount]) => (
+              <div key={source} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-gray-700 font-semibold">{source}</h3>
+                  <span className="p-2 bg-green-100 rounded-lg">
+                    <Building2 size={18} className="text-green-600" />
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(amount as number)}</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                </p>
+              </div>
+            ))}
           </>
         )}
 
@@ -458,11 +483,24 @@ const Reports: React.FC = () => {
                 </p>
               </div>
             ))}
+            {Object.entries(summaryData.categoryTotals).map(([category, amount]) => (
+              <div key={category} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-gray-700 font-semibold">{category}</h3>
+                  <span className="p-2 bg-purple-100 rounded-lg">
+                    <Receipt size={18} className="text-purple-600" />
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-purple-600">{formatCurrency(amount as number)}</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                </p>
+              </div>
+            ))}
           </>
         )}
       </div>
 
-      {/* Detailed Transactions Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
