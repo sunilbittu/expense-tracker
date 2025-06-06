@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, Briefcase } from 'lucide-react';
 
 const ProjectList: React.FC = () => {
   const { projects, addProject, updateProject, deleteProject } = useExpenses();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState<Omit<Project, 'id'>>({
@@ -76,7 +77,7 @@ const ProjectList: React.FC = () => {
 
     try {
       if (editingProject) {
-        await updateProject(editingProject.id, formData);
+        await updateProject(editingProject._id, formData);
       } else {
         await addProject(formData);
       }
@@ -149,7 +150,7 @@ const ProjectList: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((project) => (
           <div
-            key={project.id}
+            key={project._id}
             className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between mb-4">

@@ -453,7 +453,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addProject = async (project: Omit<Project, '_id'>) => {
     try {
       const response = await projectsApi.create(project);
-      setProjects(prev => [...prev, response]);
+      setProjects(prev => [...prev, response.project]);
       toast.success('Project added successfully');
     } catch (error: any) {
       console.error('Error adding project:', error);
@@ -463,12 +463,15 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateProject = async (id: string, project: Omit<Project, '_id'>) => {
+    console.log('ExpenseContext updateProject called with ID:', id, 'and project data:', project);
     try {
       const response = await projectsApi.update(id, project);
       setProjects(prev => prev.map(proj => 
-        proj._id === id ? response : proj
+        proj._id === id ? response.project : proj
       ));
       toast.success('Project updated successfully');
+      // Refresh projects list to ensure consistency
+      await refreshProjects();
     } catch (error: any) {
       console.error('Error updating project:', error);
       toast.error(error.response?.data?.message || 'Failed to update project');
@@ -477,6 +480,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteProject = async (id: string) => {
+    console.log('ExpenseContext deleteProject called with ID:', id);
     // Check if there are expenses with this project
     const hasExpenses = expenses.some(expense => expense.projectId === id);
     
@@ -489,6 +493,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       await projectsApi.delete(id);
       setProjects(prev => prev.filter(project => project._id !== id));
       toast.success('Project deleted successfully');
+      // Refresh projects list to ensure consistency
+      await refreshProjects();
     } catch (error: any) {
       console.error('Error deleting project:', error);
       toast.error(error.response?.data?.message || 'Failed to delete project');
