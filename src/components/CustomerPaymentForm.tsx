@@ -9,7 +9,7 @@ interface CustomerPaymentFormProps {
 }
 
 const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, onComplete }) => {
-  const { addCustomerPayment, customers, projects, refreshCustomers, isLoadingCustomers, customerPayments } = useExpenses();
+  const { addCustomerPayment, updateCustomerPayment, customers, projects, refreshCustomers, isLoadingCustomers, customerPayments } = useExpenses();
   const [formData, setFormData] = useState({
     customerId: '',
     customerName: '',
@@ -42,7 +42,7 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
       customer.plotNumber.toLowerCase().includes(query) ||
       customer.email?.toLowerCase().includes(query) ||
       customer.phone?.toLowerCase().includes(query) ||
-      projects.find(p => p.id === customer.projectId)?.name.toLowerCase().includes(query)
+      projects.find(p => p._id === customer.projectId)?.name.toLowerCase().includes(query)
     );
   }, [customers, customerSearchQuery, projects]);
 
@@ -51,6 +51,9 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
     if (formData.customerId) {
       const selectedCustomer = customers.find(c => c.id === formData.customerId);
       if (selectedCustomer) {
+        console.log('Selected customer:', selectedCustomer);
+        console.log('Customer projectId:', selectedCustomer.projectId);
+        console.log('Available projects:', projects);
         setFormData(prev => ({
           ...prev,
           customerName: selectedCustomer.name,
@@ -63,19 +66,21 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
         setIsCustomerDropdownOpen(false);
       }
     }
-  }, [formData.customerId, customers]);
+  }, [formData.customerId, customers, projects]);
 
   useEffect(() => {
     if (paymentId) {
       const payment = customerPayments.find(p => p.id === paymentId);
       if (payment) {
+        // Find customer by name since CustomerPayment doesn't have customerId
+        const customer = customers.find(c => c.name === payment.customerName);
         setFormData(prev => ({
           ...prev,
-          customerId: payment.customerId || '',
+          customerId: customer?.id || '',
           customerName: payment.customerName || '',
           amount: payment.amount.toString(),
           paymentDate: payment.date,
-          paymentMethod: payment.paymentMethod || 'credit_card',
+          paymentMethod: payment.paymentMode || 'cash',
           plotNumber: payment.plotNumber || '',
           description: payment.description || 'Customer payment',
           paymentCategory: payment.paymentCategory || 'token',
@@ -85,40 +90,64 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
           constructionCharges: payment.constructionCharges?.toString() || '',
           projectId: payment.projectId || '',
         }));
+        // Set the search query to show the customer name
+        if (customer) {
+          setCustomerSearchQuery(customer.name);
+        }
       }
     }
-  }, [paymentId, customerPayments]);
+  }, [paymentId, customerPayments, customers]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addCustomerPayment({
-      ...formData,
+    
+    const paymentData = {
       amount: parseFloat(formData.amount),
+      date: formData.paymentDate,
+      description: formData.description || 'Customer payment',
+      paymentMode: formData.paymentMethod as any,
+      customerName: formData.customerName,
+      projectId: formData.projectId,
+      plotNumber: formData.plotNumber,
+      paymentCategory: formData.paymentCategory,
       totalPrice: parseFloat(formData.totalPrice),
       developmentCharges: parseFloat(formData.developmentCharges),
       clubhouseCharges: parseFloat(formData.clubhouseCharges),
       constructionCharges: parseFloat(formData.constructionCharges),
-      description: formData.description || 'Customer payment', // Ensure description is not empty
-      type: 'payment',
-      id: Date.now().toString(),
-      date: formData.paymentDate
-    });
-    setFormData({
-      customerId: '',
-      customerName: '',
-      amount: '',
-      paymentDate: '',
-      paymentMethod: 'credit_card',
-      plotNumber: '',
-      description: 'Customer payment',
-      paymentCategory: 'token',
-      totalPrice: '',
-      developmentCharges: '',
-      clubhouseCharges: '',
-      constructionCharges: '',
-      projectId: '',
-    });
-    setCustomerSearchQuery('');
+    };
+
+    try {
+      if (paymentId) {
+        // Update existing payment
+        await updateCustomerPayment(paymentId, paymentData);
+      } else {
+        // Add new payment
+        await addCustomerPayment(paymentData);
+        // Reset form only for new payments
+        setFormData({
+          customerId: '',
+          customerName: '',
+          amount: '',
+          paymentDate: '',
+          paymentMethod: 'credit_card',
+          plotNumber: '',
+          description: 'Customer payment',
+          paymentCategory: 'token',
+          totalPrice: '',
+          developmentCharges: '',
+          clubhouseCharges: '',
+          constructionCharges: '',
+          projectId: '',
+        });
+        setCustomerSearchQuery('');
+      }
+      
+      // Redirect to customer payment list after successful submission
+      onComplete();
+    } catch (error) {
+      console.error('Error submitting customer payment:', error);
+      // Error is already handled in the context with toast
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -148,7 +177,7 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
   };
 
   const getProjectName = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
+    const project = projects.find(p => p._id === projectId);
     return project?.name || 'Unknown Project';
   };
 
@@ -339,7 +368,7 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
             {/* Project */}
             <div>
               <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-1">
-                Project
+                Project {formData.projectId && <span className="text-xs text-gray-500">(Auto-selected: {getProjectName(formData.projectId)})</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -351,17 +380,27 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
                   value={formData.projectId}
                   onChange={handleChange}
                   required
-                  disabled
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                  disabled={!!formData.customerId}
+                  className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg ${
+                    formData.customerId 
+                      ? 'bg-gray-100 cursor-not-allowed' 
+                      : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                 >
                   <option value="">Select a project</option>
                   {projects.map(project => (
-                    <option key={project.id} value={project.id}>
+                    <option key={project._id} value={project._id}>
                       {project.name}
                     </option>
                   ))}
                 </select>
               </div>
+              {/* Debug info */}
+              {formData.projectId && (
+                <div className="mt-1 text-xs text-gray-500">
+                  Debug - Form projectId: {formData.projectId}
+                </div>
+              )}
             </div>
 
             {/* Plot Number */}
@@ -423,7 +462,7 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
             {/* Payment Amount */}
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
-                Payment Amount
+                Payment Amount {paymentId && <span className="text-xs text-gray-500">(Fixed)</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -439,7 +478,12 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={!!paymentId}
+                  className={`w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg ${
+                    paymentId 
+                      ? 'bg-gray-100 cursor-not-allowed' 
+                      : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                 />
               </div>
             </div>
