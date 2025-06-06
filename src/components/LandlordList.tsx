@@ -55,11 +55,13 @@ const LandlordList: React.FC<LandlordListProps> = ({ onEditLandlord, onAddLandlo
   // Filter and search landlords
   const filteredLandlords = useMemo(() => {
     return landlords.filter((landlord) => {
+      // Debug log removed
+      const searchQueryLower = searchQuery.toLowerCase();
       const matchesSearch = 
-        landlord.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        landlord.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        landlord.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        landlord.address?.toLowerCase().includes(searchQuery.toLowerCase());
+        landlord.name.toLowerCase().includes(searchQueryLower) ||
+        (landlord.phone ? landlord.phone.toLowerCase().includes(searchQueryLower) : false) ||
+        (landlord.email ? landlord.email.toLowerCase().includes(searchQueryLower) : false) ||
+        (landlord.address ? landlord.address.toLowerCase().includes(searchQueryLower) : false);
 
       const matchesStatus = 
         statusFilter === 'all' || landlord.status === statusFilter;
@@ -105,7 +107,9 @@ const LandlordList: React.FC<LandlordListProps> = ({ onEditLandlord, onAddLandlo
 
   const handleDeleteLandlord = (landlord: Landlord) => {
     if (window.confirm(`Are you sure you want to delete landlord "${landlord.name}"? This action cannot be undone.`)) {
-      deleteLandlord(landlord.id);
+      deleteLandlord(landlord.id).catch(error => {
+        console.error('Error deleting landlord:', error);
+      });
     }
   };
 
@@ -481,4 +485,4 @@ const LandlordList: React.FC<LandlordListProps> = ({ onEditLandlord, onAddLandlo
   );
 };
 
-export default LandlordList; 
+export default LandlordList;

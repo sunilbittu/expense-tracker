@@ -15,6 +15,7 @@ import EmployeeList from './EmployeeList';
 import EmployeeForm from './EmployeeForm';
 import LandlordList from './LandlordList';
 import LandlordForm from './LandlordForm';
+import AuditLogList from './AuditLogList';
 import { ActiveView } from '../types';
 import { Menu, X } from 'lucide-react';
 
@@ -29,13 +30,11 @@ const Layout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleEditExpense = (id: string) => {
-    console.log('Editing expense with ID:', id);
     setEditExpenseId(id);
     setActiveView('edit');
   };
 
   const handleEditIncome = (id: string) => {
-    console.log('Editing income with ID:', id);
     setEditIncomeId(id);
     setActiveView('edit-income');
   };
@@ -110,6 +109,8 @@ const Layout: React.FC = () => {
             onAddLandlord={() => setActiveView('add-landlord')}
           />
         );
+      case 'audit-logs':
+        return <AuditLogList />;
       case 'add':
         return <ExpenseForm onComplete={() => setActiveView('expenses')} />;
       case 'add-income':

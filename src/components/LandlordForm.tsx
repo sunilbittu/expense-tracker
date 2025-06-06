@@ -10,7 +10,6 @@ interface LandlordFormProps {
 
 const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) => {
   const { addLandlord, updateLandlord, getLandlordById } = useExpenses();
-  
   const [formData, setFormData] = useState<Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>>({
     name: '',
     amount: 0,
@@ -28,21 +27,25 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
   const totalLandPrice = formData.pricePerAcre * formData.totalExtent;
   
   useEffect(() => {
-    if (landlordId) {
-      const landlord = getLandlordById(landlordId);
-      if (landlord) {
-        setFormData({
-          name: landlord.name,
-          amount: landlord.amount,
-          pricePerAcre: landlord.pricePerAcre,
-          totalExtent: landlord.totalExtent,
-          phone: landlord.phone || '',
-          email: landlord.email || '',
-          address: landlord.address || '',
-          status: landlord.status
-        });
+    const fetchLandlord = async () => {
+      if (landlordId) {
+        const landlord = await getLandlordById(landlordId);
+        if (landlord) {
+          setFormData({
+            name: landlord.name,
+            amount: landlord.amount,
+            pricePerAcre: landlord.pricePerAcre,
+            totalExtent: landlord.totalExtent,
+            phone: landlord.phone || '',
+            email: landlord.email || '',
+            address: landlord.address || '',
+            status: landlord.status
+          });
+        }
       }
-    }
+    };
+    
+    fetchLandlord();
   }, [landlordId, getLandlordById]);
 
   const validateForm = () => {
@@ -76,20 +79,27 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
     
-    if (landlordId) {
-      updateLandlord(landlordId, formData);
-    } else {
-      addLandlord(formData);
+    try {
+      if (landlordId) {
+        await updateLandlord(landlordId, formData);
+      } else {
+        await addLandlord(formData);
+      }
+      
+      // Only redirect to listing page if save is successful
+      onComplete();
+    } catch (error) {
+      console.error('Error saving landlord:', error);
+      // You could add error state handling here if needed
+      // For example, display an error message to the user
     }
-    
-    onComplete();
   };
   
   const handleChange = (
@@ -232,7 +242,6 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
                     value={formData.pricePerAcre}
                     onChange={handleChange}
                     min="0"
-                    step="10000"
                     className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.pricePerAcre ? 'border-red-500' : 'border-gray-300'
                     }`}
@@ -290,7 +299,7 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
                 />
               </div>
               <p className="mt-1 text-sm text-blue-600">
-                Calculated as: Price per Acre × Total Extent = ₹{formData.pricePerAcre.toLocaleString('en-IN')} × {formData.totalExtent} acres
+                Calculated as: Price per Acre × Total Extent = ₹{formData?.pricePerAcre?.toLocaleString('en-IN')} × {formData.totalExtent} acres
               </p>
             </div>
           </div>
@@ -394,4 +403,4 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
   );
 };
 
-export default LandlordForm; 
+export default LandlordForm;
