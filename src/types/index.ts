@@ -122,6 +122,7 @@ export type ExpenseContextType = {
   isLoadingProjects: boolean;
   isLoadingCategories: boolean;
   isLoadingIncomes: boolean;
+  isLoadingLandlords: boolean;
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
   updateExpense: (id: string, expense: Omit<Expense, 'id' | 'createdAt'>) => void;
   deleteExpense: (id: string) => void;
@@ -145,10 +146,11 @@ export type ExpenseContextType = {
   updateEmployee: (id: string, employee: Omit<Employee, 'id' | 'createdAt'>) => void;
   deleteEmployee: (id: string) => void;
   getEmployeeById: (id: string) => Employee | undefined;
-  addLandlord: (landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => void;
-  updateLandlord: (id: string, landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => void;
-  deleteLandlord: (id: string) => void;
-  getLandlordById: (id: string) => Landlord | undefined;
+  addLandlord: (landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => Promise<void>;
+  updateLandlord: (id: string, landlord: Omit<Landlord, 'id' | 'createdAt' | 'totalLandPrice'>) => Promise<void>;
+  deleteLandlord: (id: string) => Promise<void>;
+  getLandlordById: (id: string) => Promise<Landlord | undefined>;
+  refreshLandlords: () => Promise<void>;
   addProject: (project: Omit<Project, 'id'>) => Promise<void>;
   updateProject: (id: string, project: Omit<Project, 'id'>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
@@ -157,7 +159,7 @@ export type ExpenseContextType = {
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'employees' | 'landlords' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'add-employee' | 'add-landlord' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer' | 'edit-employee' | 'edit-landlord';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'employees' | 'landlords' | 'audit-logs' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'add-employee' | 'add-landlord' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer' | 'edit-employee' | 'edit-landlord';
 
 export type FilterOptions = {
   project: string;
@@ -182,4 +184,49 @@ export type Landlord = {
   email?: string;
   createdAt: string;
   status: 'active' | 'inactive';
+};
+
+export type AuditLogAction = 'CREATE' | 'UPDATE' | 'DELETE';
+
+export type AuditLogEntityType = 'expense' | 'income' | 'customer-payment' | 'customer' | 'employee' | 'landlord' | 'project' | 'category';
+
+export type AuditLog = {
+  _id: string;
+  user: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  action: AuditLogAction;
+  entityType: AuditLogEntityType;
+  entityId: string;
+  changes: {
+    old: any;
+    new: any;
+  };
+  metadata: {
+    userAgent?: string;
+    ipAddress?: string;
+    description?: string;
+  };
+  timestamp: string;
+};
+
+export type AuditLogFilterOptions = {
+  entityType: string;
+  action: string;
+  startDate: string;
+  endDate: string;
+  entityId: string;
+  search: string;
+};
+
+export type AuditLogStats = {
+  total: number;
+  actionBreakdown: Record<AuditLogAction, number>;
+  entityBreakdown: Record<AuditLogEntityType, number>;
+  dailyActivity: Array<{
+    date: string;
+    count: number;
+  }>;
 };

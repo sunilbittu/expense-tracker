@@ -30,7 +30,6 @@ interface IncomeListProps {
 const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) => {
   const { incomes, deleteIncome } = useExpenses();
 
-  console.log('Income List', incomes);
   const { handlePrint, exportToPDF, formatCurrency: formatCurrencyUtil } = usePrintAndExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPaymentMode, setSelectedPaymentMode] = useState<PaymentMode | ''>('');

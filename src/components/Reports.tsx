@@ -76,7 +76,7 @@ const Reports: React.FC = () => {
 
   const filteredData = useMemo(() => {
     const { start, end } = getDateRange();
-    let data = [];
+    let data: any[] = [];
 
     switch (reportType) {
       case 'expenses':
@@ -109,8 +109,8 @@ const Reports: React.FC = () => {
 
   const summaryData = useMemo(() => {
     if (reportType === 'expenses') {
-      const categoryTotals = {};
-      const subcategoryTotals = {};
+      const categoryTotals: { [key: string]: number } = {};
+      const subcategoryTotals: { [key: string]: number } = {};
       
       filteredData.forEach(expense => {
         const category = categories.find(c => c.id === expense.category);
@@ -128,8 +128,8 @@ const Reports: React.FC = () => {
         subcategoryTotals
       };
     } else if (reportType === 'income') {
-      const payeeTotals = {};
-      const sourceTotals = {};
+      const payeeTotals: { [key: string]: number } = {};
+      const sourceTotals: { [key: string]: number } = {};
       filteredData.forEach(income => {
         payeeTotals[income.payee] = (payeeTotals[income.payee] || 0) + income.amount;
         sourceTotals[income.source] = (sourceTotals[income.source] || 0) + income.amount;
@@ -141,8 +141,8 @@ const Reports: React.FC = () => {
         sourceTotals
       };
     } else {
-      const customerTotals = {};
-      const categoryTotals = {};
+      const customerTotals: { [key: string]: number } = {};
+      const categoryTotals: { [key: string]: number } = {};
       filteredData.forEach(payment => {
         customerTotals[payment.customerName] = (customerTotals[payment.customerName] || 0) + payment.amount;
         categoryTotals[payment.paymentCategory] = (categoryTotals[payment.paymentCategory] || 0) + payment.amount;
@@ -159,7 +159,7 @@ const Reports: React.FC = () => {
   const downloadReport = () => {
     const workbook = XLSX.utils.book_new();
 
-    const summaryData = [
+    const reportData: (string | number)[][] = [
       ['Report Type', reportType.toUpperCase()],
       ['Period', `${format(parseISO(getDateRange().start), 'dd/MM/yyyy')} to ${format(parseISO(getDateRange().end), 'dd/MM/yyyy')}`],
       ['Total Amount', formatCurrency(summaryData.total)],
@@ -167,21 +167,21 @@ const Reports: React.FC = () => {
     ];
 
     if (reportType === 'expenses') {
-      summaryData.push(['Category Breakdown']);
-      summaryData.push(['Category', 'Amount', 'Percentage']);
-      Object.entries(summaryData.categoryTotals).forEach(([category, amount]) => {
-        summaryData.push([
+      reportData.push(['Category Breakdown']);
+      reportData.push(['Category', 'Amount', 'Percentage']);
+      Object.entries(summaryData.categoryTotals || {}).forEach(([category, amount]) => {
+        reportData.push([
           category,
           formatCurrency(amount as number),
           `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
         ]);
       });
 
-      summaryData.push([''], ['Subcategory Breakdown']);
-      summaryData.push(['Category', 'Subcategory', 'Amount', 'Percentage']);
-      Object.entries(summaryData.subcategoryTotals).forEach(([key, amount]) => {
+      reportData.push([''], ['Subcategory Breakdown']);
+      reportData.push(['Category', 'Subcategory', 'Amount', 'Percentage']);
+      Object.entries(summaryData.subcategoryTotals || {}).forEach(([key, amount]) => {
         const [category, subcategory] = key.split('-');
-        summaryData.push([
+        reportData.push([
           category,
           subcategory,
           formatCurrency(amount as number),
@@ -189,40 +189,40 @@ const Reports: React.FC = () => {
         ]);
       });
     } else if (reportType === 'income') {
-      summaryData.push(['Payee Breakdown']);
-      summaryData.push(['Payee', 'Amount', 'Percentage']);
-      Object.entries(summaryData.payeeTotals).forEach(([payee, amount]) => {
-        summaryData.push([
+      reportData.push(['Payee Breakdown']);
+      reportData.push(['Payee', 'Amount', 'Percentage']);
+      Object.entries(summaryData.payeeTotals || {}).forEach(([payee, amount]) => {
+        reportData.push([
           payee,
           formatCurrency(amount as number),
           `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
         ]);
       });
 
-      summaryData.push([''], ['Source Breakdown']);
-      summaryData.push(['Source', 'Amount', 'Percentage']);
-      Object.entries(summaryData.sourceTotals).forEach(([source, amount]) => {
-        summaryData.push([
+      reportData.push([''], ['Source Breakdown']);
+      reportData.push(['Source', 'Amount', 'Percentage']);
+      Object.entries(summaryData.sourceTotals || {}).forEach(([source, amount]) => {
+        reportData.push([
           source,
           formatCurrency(amount as number),
           `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
         ]);
       });
     } else {
-      summaryData.push(['Customer Breakdown']);
-      summaryData.push(['Customer', 'Amount', 'Percentage']);
-      Object.entries(summaryData.customerTotals).forEach(([customer, amount]) => {
-        summaryData.push([
+      reportData.push(['Customer Breakdown']);
+      reportData.push(['Customer', 'Amount', 'Percentage']);
+      Object.entries(summaryData.customerTotals || {}).forEach(([customer, amount]) => {
+        reportData.push([
           customer,
           formatCurrency(amount as number),
           `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
         ]);
       });
 
-      summaryData.push([''], ['Payment Category Breakdown']);
-      summaryData.push(['Category', 'Amount', 'Percentage']);
-      Object.entries(summaryData.categoryTotals).forEach(([category, amount]) => {
-        summaryData.push([
+      reportData.push([''], ['Payment Category Breakdown']);
+      reportData.push(['Category', 'Amount', 'Percentage']);
+      Object.entries(summaryData.categoryTotals || {}).forEach(([category, amount]) => {
+        reportData.push([
           category,
           formatCurrency(amount as number),
           `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
@@ -230,7 +230,7 @@ const Reports: React.FC = () => {
       });
     }
 
-    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    const summarySheet = XLSX.utils.aoa_to_sheet(reportData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
     const detailsData = filteredData.map(item => {
@@ -242,7 +242,7 @@ const Reports: React.FC = () => {
       if (reportType === 'expenses') {
         return {
           ...baseData,
-          Project: projects.find(p => p.id === (item as any).projectId)?.name || '',
+          Project: projects.find(p => p._id === (item as any).projectId)?.name || '',
           Category: categories.find(c => c.id === (item as any).category)?.name || '',
           Subcategory: categories
             .find(c => c.id === (item as any).category)
@@ -262,7 +262,7 @@ const Reports: React.FC = () => {
         return {
           ...baseData,
           Customer: (item as any).customerName,
-          Project: projects.find(p => p.id === (item as any).projectId)?.name || '',
+          Project: projects.find(p => p._id === (item as any).projectId)?.name || '',
           'Plot Number': (item as any).plotNumber,
           'Payment Category': (item as any).paymentCategory,
           'Total Price': (item as any).totalPrice,
@@ -371,7 +371,7 @@ const Reports: React.FC = () => {
               >
                 <option value="">All Projects</option>
                 {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
+                  <option key={project._id} value={project._id}>
                     {project.name}
                   </option>
                 ))}
@@ -560,7 +560,7 @@ const Reports: React.FC = () => {
                   )}
                   {(reportType === 'expenses' || reportType === 'payments') && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {projects.find(p => p.id === (item as any).projectId)?.name}
+                      {projects.find(p => p._id === (item as any).projectId)?.name}
                     </td>
                   )}
                   {reportType === 'expenses' && (

@@ -30,6 +30,11 @@ router.get('/', authenticateToken, async (req, res) => {
     const transformedLandlords = landlords.map(landlord => ({
       id: landlord._id.toString(),
       name: landlord.name,
+      amount: landlord.amount,
+      pricePerAcre: landlord.pricePerAcre,
+      totalExtent: landlord.totalExtent,
+      totalLandPrice: landlord.totalLandPrice,
+      status: landlord.status,
       phone: landlord.phone,
       email: landlord.email,
       address: landlord.address,
@@ -65,6 +70,11 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const transformedLandlord = {
       id: landlord._id.toString(),
       name: landlord.name,
+      amount: landlord.amount,
+      pricePerAcre: landlord.pricePerAcre,
+      totalExtent: landlord.totalExtent,
+      totalLandPrice: landlord.totalLandPrice,
+      status: landlord.status,
       phone: landlord.phone,
       email: landlord.email,
       address: landlord.address,
@@ -90,6 +100,11 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const {
       name,
+      amount,
+      pricePerAcre,
+      totalExtent,
+      totalLandPrice,
+      status,
       phone,
       email,
       address,
@@ -105,9 +120,26 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     }
 
+    if (pricePerAcre === undefined || pricePerAcre <= 0) {
+      return res.status(400).json({
+        message: 'Price per acre is required and must be greater than zero'
+      });
+    }
+
+    if (totalExtent === undefined || totalExtent <= 0) {
+      return res.status(400).json({
+        message: 'Total extent is required and must be greater than zero'
+      });
+    }
+
     // Create new landlord
     const landlord = new Landlord({
       name: name.trim(),
+      amount: amount || 0,
+      pricePerAcre,
+      totalExtent,
+      totalLandPrice: totalLandPrice || (pricePerAcre * totalExtent),
+      status: status || 'active',
       phone: phone?.trim() || '',
       email: email?.trim() || '',
       address: address?.trim() || '',
@@ -127,6 +159,11 @@ router.post('/', authenticateToken, async (req, res) => {
     const transformedLandlord = {
       id: landlord._id.toString(),
       name: landlord.name,
+      amount: landlord.amount,
+      pricePerAcre: landlord.pricePerAcre,
+      totalExtent: landlord.totalExtent,
+      totalLandPrice: landlord.totalLandPrice,
+      status: landlord.status,
       phone: landlord.phone,
       email: landlord.email,
       address: landlord.address,
@@ -162,6 +199,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const {
       name,
+      amount,
+      pricePerAcre,
+      totalExtent,
+      status,
       phone,
       email,
       address,
@@ -182,6 +223,25 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     // Update landlord fields
     if (name) landlord.name = name.trim();
+    if (amount !== undefined) landlord.amount = amount;
+    
+    // Update price per acre and total extent if provided
+    let recalculateTotalPrice = false;
+    if (pricePerAcre !== undefined && pricePerAcre > 0) {
+      landlord.pricePerAcre = pricePerAcre;
+      recalculateTotalPrice = true;
+    }
+    if (totalExtent !== undefined && totalExtent > 0) {
+      landlord.totalExtent = totalExtent;
+      recalculateTotalPrice = true;
+    }
+    
+    // Recalculate total land price if either price per acre or total extent changed
+    if (recalculateTotalPrice) {
+      landlord.totalLandPrice = landlord.pricePerAcre * landlord.totalExtent;
+    }
+    
+    if (status !== undefined) landlord.status = status;
     if (phone !== undefined) landlord.phone = phone?.trim() || '';
     if (email !== undefined) landlord.email = email?.trim() || '';
     if (address !== undefined) landlord.address = address?.trim() || '';
@@ -199,6 +259,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const transformedLandlord = {
       id: landlord._id.toString(),
       name: landlord.name,
+      amount: landlord.amount,
+      pricePerAcre: landlord.pricePerAcre,
+      totalExtent: landlord.totalExtent,
+      totalLandPrice: landlord.totalLandPrice,
+      status: landlord.status,
       phone: landlord.phone,
       email: landlord.email,
       address: landlord.address,

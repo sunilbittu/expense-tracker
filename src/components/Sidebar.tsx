@@ -8,7 +8,8 @@ import {
   DollarSign,
   Users,
   FileSpreadsheet,
-  Landmark
+  Landmark,
+  Shield
 } from 'lucide-react';
 import { ActiveView } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -60,6 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
     { id: 'landlords', label: 'Landlords', icon: <Landmark size={20} /> },
     { id: 'projects', label: 'Projects', icon: <Briefcase size={20} /> },
     { id: 'reports', label: 'Reports', icon: <FileSpreadsheet size={20} /> },
+    { id: 'audit-logs', label: 'Audit Logs', icon: <Shield size={20} /> },
   ];
 
   return (

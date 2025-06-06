@@ -26,10 +26,8 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
 
   useEffect(() => {
     if (incomeId) {
-      console.log('Loading income with ID:', incomeId);
       const fetchIncome = async () => {
         const income = await getIncomeById(incomeId);
-        console.log('Fetched income:', income);
         if (income) {
           setFormData({
             amount: income.amount.toString(),
@@ -80,8 +78,6 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ incomeId, onComplete }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form with data:', formData);
-    console.log('Income ID:', incomeId);
     
     if (!validateForm()) {
       return;

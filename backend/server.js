@@ -26,6 +26,9 @@ const customerRoutes = require('./routes/customers');
 const projectRoutes = require('./routes/projects');
 const categoryRoutes = require('./routes/categories');
 const landlordRoutes = require('./routes/landlords');
+const employeeRoutes = require('./routes/employees');
+const customerPaymentRoutes = require('./routes/customerPayments');
+const auditLogRoutes = require('./routes/auditLogs');
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -35,6 +38,9 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/landlords', landlordRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/customer-payments', customerPaymentRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -7,6 +7,30 @@ const landlordSchema = new mongoose.Schema({
     trim: true,
     minlength: 2
   },
+  amount: {
+    type: Number,
+    default: 0
+  },
+  pricePerAcre: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  totalExtent: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  totalLandPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  },
   phone: {
     type: String,
     trim: true,
