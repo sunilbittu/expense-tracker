@@ -198,7 +198,7 @@ const Layout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Mobile menu button */}
       <div className="fixed top-4 left-4 z-40 md:hidden">
         <button
@@ -216,7 +216,7 @@ const Layout: React.FC = () => {
         } transition-transform duration-300 ease-in-out`}
       >
         <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={() => setIsMobileSidebarOpen(false)}></div>
-        <div className="relative z-10 w-64 h-full bg-white shadow-lg">
+        <div className="relative z-10 w-64 h-full bg-white shadow-lg overflow-hidden">
           <Sidebar
             activeView={activeView}
             setActiveView={(view) => {
@@ -228,14 +228,16 @@ const Layout: React.FC = () => {
       </div>
 
       {/* Sidebar for desktop */}
-      <div className="hidden md:block w-64 h-screen bg-white shadow-lg">
+      <div className="hidden md:block w-64 h-screen bg-white shadow-lg overflow-hidden flex-shrink-0">
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
       </div>
 
       {/* Main content */}
-      <div className="flex-1">
-        <main className="p-4 md:p-8 max-w-6xl mx-auto">
-          {renderActiveView()}
+      <div className="flex-1 h-screen overflow-hidden">
+        <main className="h-full overflow-y-auto p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
+            {renderActiveView()}
+          </div>
         </main>
       </div>
     </div>

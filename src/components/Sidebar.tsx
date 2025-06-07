@@ -68,32 +68,38 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 p-6">
         <h1 className="text-2xl font-bold text-gray-800">
           <span className="text-blue-600">Expense</span>Track
         </h1>
       </div>
-      <nav className="flex-1 px-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              <button
-                onClick={() => setActiveView(item.id as ActiveView)}
-                className={`w-full flex items-center py-3 px-4 rounded-lg transition-colors ${
-                  activeView === item.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <span className="mr-3">{item.icon}</span>
-                <span className="font-medium">{item.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+      
+      {/* Scrollable Navigation */}
+      <nav className="flex-1 overflow-y-auto scrollbar-thin">
+        <div className="px-4 pb-4">
+          <ul className="space-y-2">
+            {menuItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  onClick={() => setActiveView(item.id as ActiveView)}
+                  className={`w-full flex items-center py-3 px-4 rounded-lg transition-colors ${
+                    activeView === item.id
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="mr-3">{item.icon}</span>
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </nav>
 
-      <div className="p-4 mt-auto space-y-2">
+      {/* Fixed Action Buttons */}
+      <div className="flex-shrink-0 p-4 space-y-2 border-t border-gray-200">
         <button
           onClick={() => setActiveView('add')}
           className="w-full flex items-center justify-center py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -119,7 +125,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         </button>
       </div>
 
-      <div className="p-4 border-t border-gray-200">
+      {/* Fixed User Profile Footer */}
+      <div className="flex-shrink-0 p-4 border-t border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className={`w-10 h-10 rounded-full ${getAvatarColor(user?.email || '')} flex items-center justify-center`}>
