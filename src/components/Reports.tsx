@@ -104,7 +104,7 @@ const Reports: React.FC = () => {
         break;
       case 'landlords':
         data = landlords.filter(landlord => {
-          const date = parseISO(landlord.date);
+          const date = parseISO(landlord.date || new Date().toISOString());
           const isInDateRange = format(date, 'yyyy-MM-dd') >= start && format(date, 'yyyy-MM-dd') <= end;
           const matchesProject = !projectFilter || landlord.projectId === projectFilter;
           return isInDateRange && matchesProject;

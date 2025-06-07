@@ -1,25 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 import { 
-  ChevronRight, 
-  TrendingUp, 
   TrendingDown, 
-  DollarSign,
-  Calendar,
-  Briefcase,
+  IndianRupee,
   Filter,
   Users,
   ArrowUpRight,
   ArrowDownRight,
   Wallet,
-  Building2
+  Landmark,
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, subMonths } from 'date-fns';
 import ExpenseSummaryChart from './ExpenseSummaryChart';
 import ExpenseCategoryChart from './ExpenseCategoryChart';
 
 const Dashboard: React.FC = () => {
-  const { expenses, incomes, customerPayments, projects, categories, employees } = useExpenses();
+  const { expenses, incomes, customerPayments, employees, landlords } = useExpenses();
   const [dateRange, setDateRange] = useState({
     startDate: format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'),
     endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
@@ -67,32 +63,6 @@ const Dashboard: React.FC = () => {
     };
   }, [filteredData]);
 
-  // Recent transactions (combined and sorted)
-  const recentTransactions = useMemo(() => {
-    const allTransactions = [
-      ...expenses.map(e => ({
-        ...e,
-        type: 'expense' as const,
-        title: e.description,
-        amount: -e.amount
-      })),
-      ...incomes.map(i => ({
-        ...i,
-        type: 'income' as const,
-        title: i.description,
-        projectId: ''
-      })),
-      ...customerPayments.map(p => ({
-        ...p,
-        type: 'payment' as const,
-        title: `Payment from ${p.customerName}`
-      }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-
-    return allTransactions;
-  }, [expenses, incomes, customerPayments]);
-
   // Customer payment statistics
   const paymentStats = useMemo(() => {
     const totalDue = customerPayments.reduce((acc, payment) => acc + payment.totalPrice, 0);
@@ -120,6 +90,22 @@ const Dashboard: React.FC = () => {
     };
   }, [employees]);
 
+  // Landlord statistics
+  const landlordStats = useMemo(() => {
+    const activeLandlords = landlords.filter(landlord => landlord.status === 'active').length;
+    const totalLandValue = landlords.reduce((acc, landlord) => acc + landlord.totalLandPrice, 0);
+    const totalAdvanceAmount = landlords.reduce((acc, landlord) => acc + landlord.amount, 0);
+    const totalAcres = landlords.reduce((acc, landlord) => acc + landlord.totalExtent, 0);
+    
+    return {
+      totalLandlords: landlords.length,
+      activeLandlords,
+      totalLandValue,
+      totalAdvanceAmount,
+      totalAcres
+    };
+  }, [landlords]);
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -137,11 +123,6 @@ const Dashboard: React.FC = () => {
     }));
   };
 
-  // Get project name
-  const getProjectName = (id: string) => {
-    const project = projects.find((p) => p.id === id);
-    return project ? project.name : 'N/A';
-  };
 
   return (
     <div className="space-y-8">
@@ -204,14 +185,14 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-gray-500 text-sm font-medium">Total Income</h3>
             <span className="p-2 bg-green-100 rounded-lg">
-              <DollarSign size={18} className="text-green-600" />
+              <IndianRupee size={18} className="text-green-600" />
             </span>
           </div>
           <p className="mt-2 text-2xl font-bold text-gray-800">
             {formatCurrency(totals.totalReceived)}
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            Income + Customer Payments
+            Investment + Customer Payments
           </p>
         </div>
 
@@ -284,6 +265,55 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Landlord Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-700 font-semibold">Total Landlords</h3>
+            <span className="p-2 bg-orange-100 rounded-lg">
+              <Users size={18} className="text-orange-600" />
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-gray-800">{landlordStats.totalLandlords}</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {landlordStats.activeLandlords} active landlords
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-700 font-semibold">Total Land Value</h3>
+            <span className="p-2 bg-green-100 rounded-lg">
+              <Landmark size={18} className="text-green-600" />
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-gray-800">{formatCurrency(landlordStats.totalLandValue)}</p>
+          <p className="mt-1 text-sm text-gray-500">Total property value</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-700 font-semibold">Advance Payments</h3>
+            <span className="p-2 bg-blue-100 rounded-lg">
+              <Wallet size={18} className="text-blue-600" />
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-blue-600">{formatCurrency(landlordStats.totalAdvanceAmount)}</p>
+          <p className="mt-1 text-sm text-gray-500">Total advance paid</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-gray-700 font-semibold">Total Acres</h3>
+            <span className="p-2 bg-purple-100 rounded-lg">
+              <Landmark size={18} className="text-purple-600" />
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-purple-600">{landlordStats.totalAcres.toFixed(2)}</p>
+          <p className="mt-1 text-sm text-gray-500">Total land area</p>
+        </div>
+      </div>
+
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -302,62 +332,6 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800">Recent Transactions</h3>
-        </div>
-        {recentTransactions.length > 0 ? (
-          <div className="divide-y divide-gray-100">
-            {recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div 
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          transaction.type === 'expense' 
-                            ? 'bg-red-100 text-red-600'
-                            : transaction.type === 'income'
-                            ? 'bg-green-100 text-green-600'
-                            : 'bg-purple-100 text-purple-600'
-                        }`}
-                      >
-                        {transaction.type === 'expense' && <TrendingDown size={20} />}
-                        {transaction.type === 'income' && <TrendingUp size={20} />}
-                        {transaction.type === 'payment' && <Users size={20} />}
-                      </div>
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-800">{transaction.title}</p>
-                      <p className="text-sm text-gray-500">
-                        {transaction.type === 'expense' && getProjectName(transaction.projectId)}
-                        {transaction.type === 'income' && transaction.source}
-                        {transaction.type === 'payment' && `Plot ${transaction.plotNumber}`}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-semibold ${
-                      transaction.type === 'expense' 
-                        ? 'text-red-600' 
-                        : 'text-green-600'
-                    }`}>
-                      {formatCurrency(transaction.amount)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {format(parseISO(transaction.date), 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="px-6 py-8 text-center">
-            <p className="text-gray-500">No transactions found</p>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
