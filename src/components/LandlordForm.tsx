@@ -59,6 +59,14 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
       newErrors.amount = 'Amount cannot be negative';
     }
     
+    if (formData.pricePerAcre < 0) {
+      newErrors.pricePerAcre = 'Price per acre cannot be negative';
+    }
+    
+    if (formData.totalExtent < 0) {
+      newErrors.totalExtent = 'Total extent cannot be negative';
+    }
+    
     if (formData.phone && !/^\d{10}$/.test(formData.phone.trim())) {
       newErrors.phone = 'Invalid phone number format (10 digits required)';
     }
@@ -102,7 +110,7 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
     setFormData(prev => ({
       ...prev,
       [name]: ['amount', 'pricePerAcre', 'totalExtent'].includes(name) 
-        ? parseFloat(value) || 0 
+        ? (value === '' ? 0 : (isNaN(parseFloat(value)) ? 0 : parseFloat(value)))
         : value
     }));
     
@@ -222,7 +230,7 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
               {/* Price Per Acre */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price Per Acre *
+                  Price Per Acre
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -248,7 +256,7 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
               {/* Total Extent */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Extent (Acres) *
+                  Total Extent (Acres)
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

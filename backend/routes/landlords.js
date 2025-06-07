@@ -200,12 +200,14 @@ router.put('/:id', authenticateToken, async (req, res) => {
       notes
     } = req.body;
 
+    console.log(req.body);
     // Find landlord
     const landlord = await Landlord.findOne({
       _id: req.params.id,
       user: req.user.userId
     });
 
+    console.log(landlord);
     if (!landlord) {
       return res.status(404).json({ message: 'Landlord not found' });
     }
@@ -216,11 +218,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     
     // Update price per acre and total extent if provided
     let recalculateTotalPrice = false;
-    if (pricePerAcre !== undefined && pricePerAcre > 0) {
+    if (pricePerAcre !== undefined) {
       landlord.pricePerAcre = pricePerAcre;
       recalculateTotalPrice = true;
     }
-    if (totalExtent !== undefined && totalExtent > 0) {
+    if (totalExtent !== undefined) {
       landlord.totalExtent = totalExtent;
       recalculateTotalPrice = true;
     }
