@@ -491,7 +491,7 @@ const Dashboard: React.FC = () => {
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-700 font-semibold">Remaining Balance</h3>
+            <h3 className="text-gray-700 font-semibold">Balance</h3>
             <span className="p-2 bg-red-100 rounded-lg">
               <CreditCard size={18} className="text-red-600" />
             </span>

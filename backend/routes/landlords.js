@@ -120,17 +120,6 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     }
 
-    if (pricePerAcre === undefined || pricePerAcre <= 0) {
-      return res.status(400).json({
-        message: 'Price per acre is required and must be greater than zero'
-      });
-    }
-
-    if (totalExtent === undefined || totalExtent <= 0) {
-      return res.status(400).json({
-        message: 'Total extent is required and must be greater than zero'
-      });
-    }
 
     // Create new landlord
     const landlord = new Landlord({

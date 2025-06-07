@@ -5,11 +5,12 @@ import {
   Briefcase, 
   PlusCircle,
   LogOut,
-  DollarSign,
+  IndianRupee,
   Users,
   FileSpreadsheet,
   Landmark,
-  Shield
+  Shield,
+  Tag
 } from 'lucide-react';
 import { ActiveView } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -54,12 +55,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: 'expenses', label: 'Expenses', icon: <Receipt size={20} /> },
-    { id: 'income', label: 'Income', icon: <DollarSign size={20} /> },
+    { id: 'income', label: 'Investment', icon: <IndianRupee size={20} /> },
     { id: 'customer-payments', label: 'Customer Payments', icon: <Users size={20} /> },
     { id: 'customers', label: 'Customers', icon: <Users size={20} /> },
     { id: 'employees', label: 'Employees', icon: <Users size={20} /> },
     { id: 'landlords', label: 'Landlords', icon: <Landmark size={20} /> },
     { id: 'projects', label: 'Projects', icon: <Briefcase size={20} /> },
+    { id: 'categories', label: 'Categories', icon: <Tag size={20} /> },
     { id: 'reports', label: 'Reports', icon: <FileSpreadsheet size={20} /> },
     { id: 'audit-logs', label: 'Audit Logs', icon: <Shield size={20} /> },
   ];

@@ -59,14 +59,6 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
       newErrors.amount = 'Amount cannot be negative';
     }
     
-    if (formData.pricePerAcre <= 0) {
-      newErrors.pricePerAcre = 'Price per acre must be greater than zero';
-    }
-    
-    if (formData.totalExtent <= 0) {
-      newErrors.totalExtent = 'Total extent must be greater than zero';
-    }
-    
     if (formData.phone && !/^\d{10}$/.test(formData.phone.trim())) {
       newErrors.phone = 'Invalid phone number format (10 digits required)';
     }

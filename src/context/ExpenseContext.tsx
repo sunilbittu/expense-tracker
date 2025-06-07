@@ -515,6 +515,53 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return category?.subcategories.find((subcategory) => subcategory.id === subcategoryId);
   };
 
+  // Category CRUD operations using API
+  const addCategory = async (category: Omit<Category, 'createdAt'>) => {
+    try {
+      const response = await categoriesApi.create(category);
+      setCategories(prev => [...prev, response.category]);
+      toast.success('Category added successfully');
+    } catch (error: any) {
+      console.error('Error adding category:', error);
+      toast.error(error.response?.data?.message || 'Failed to add category');
+      throw error;
+    }
+  };
+
+  const updateCategory = async (id: string, category: Omit<Category, 'createdAt'>) => {
+    try {
+      const response = await categoriesApi.update(id, category);
+      setCategories(prev => prev.map(cat => 
+        cat.id === id ? response.category : cat
+      ));
+      toast.success('Category updated successfully');
+    } catch (error: any) {
+      console.error('Error updating category:', error);
+      toast.error(error.response?.data?.message || 'Failed to update category');
+      throw error;
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    // Check if category has any expenses
+    const hasExpenses = expenses.some(expense => expense.category === id);
+    
+    if (hasExpenses) {
+      toast.error('Cannot delete category with existing expenses');
+      return;
+    }
+    
+    try {
+      await categoriesApi.delete(id);
+      setCategories(prev => prev.filter(category => category.id !== id));
+      toast.success('Category deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting category:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete category');
+      throw error;
+    }
+  };
+
   // Employee CRUD operations using API
   const addEmployee = async (employee: Omit<Employee, 'id' | 'createdAt'>) => {
     try {
@@ -675,6 +722,9 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     getProjectById,
     getCategoryById,
     getSubCategoryById,
+    addCategory,
+    updateCategory,
+    deleteCategory,
     addEmployee,
     updateEmployee,
     deleteEmployee,

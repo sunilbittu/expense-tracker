@@ -157,9 +157,12 @@ export type ExpenseContextType = {
   getProjectById: (id: string) => Project | undefined;
   getCategoryById: (id: string) => Category | undefined;
   getSubCategoryById: (categoryId: string, subcategoryId: string) => SubCategory | undefined;
+  addCategory: (category: Omit<Category, 'createdAt'>) => Promise<void>;
+  updateCategory: (id: string, category: Omit<Category, 'createdAt'>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 };
 
-export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'employees' | 'landlords' | 'audit-logs' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'add-employee' | 'add-landlord' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer' | 'edit-employee' | 'edit-landlord';
+export type ActiveView = 'dashboard' | 'expenses' | 'income' | 'customer-payments' | 'projects' | 'reports' | 'customers' | 'employees' | 'landlords' | 'categories' | 'audit-logs' | 'add' | 'add-income' | 'add-customer-payment' | 'add-customer' | 'add-employee' | 'add-landlord' | 'add-category' | 'edit' | 'edit-income' | 'edit-customer-payment' | 'edit-customer' | 'edit-employee' | 'edit-landlord' | 'edit-category';
 
 export type FilterOptions = {
   project: string;

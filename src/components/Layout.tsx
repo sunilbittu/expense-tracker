@@ -15,6 +15,8 @@ import EmployeeList from './EmployeeList';
 import EmployeeForm from './EmployeeForm';
 import LandlordList from './LandlordList';
 import LandlordForm from './LandlordForm';
+import CategoryList from './CategoryList';
+import CategoryForm from './CategoryForm';
 import AuditLogList from './AuditLogList';
 import { ActiveView } from '../types';
 import { Menu, X } from 'lucide-react';
@@ -27,6 +29,7 @@ const Layout: React.FC = () => {
   const [editCustomerId, setEditCustomerId] = useState<string | null>(null);
   const [editEmployeeId, setEditEmployeeId] = useState<string | null>(null);
   const [editLandlordId, setEditLandlordId] = useState<string | null>(null);
+  const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleEditExpense = (id: string) => {
@@ -57,6 +60,11 @@ const Layout: React.FC = () => {
   const handleEditLandlord = (id: string) => {
     setEditLandlordId(id);
     setActiveView('edit-landlord');
+  };
+
+  const handleEditCategory = (id: string) => {
+    setEditCategoryId(id);
+    setActiveView('edit-category');
   };
 
   const renderActiveView = () => {
@@ -109,6 +117,13 @@ const Layout: React.FC = () => {
             onAddLandlord={() => setActiveView('add-landlord')}
           />
         );
+      case 'categories':
+        return (
+          <CategoryList 
+            onEditCategory={handleEditCategory}
+            onAddCategory={() => setActiveView('add-category')}
+          />
+        );
       case 'audit-logs':
         return <AuditLogList />;
       case 'add':
@@ -123,6 +138,8 @@ const Layout: React.FC = () => {
         return <EmployeeForm onComplete={() => setActiveView('employees')} />;
       case 'add-landlord':
         return <LandlordForm onComplete={() => setActiveView('landlords')} />;
+      case 'add-category':
+        return <CategoryForm onComplete={() => setActiveView('categories')} />;
       case 'edit':
         return (
           <ExpenseForm
@@ -166,6 +183,13 @@ const Layout: React.FC = () => {
           <LandlordForm
             landlordId={editLandlordId}
             onComplete={() => setActiveView('landlords')}
+          />
+        );
+      case 'edit-category':
+        return (
+          <CategoryForm
+            categoryId={editCategoryId}
+            onComplete={() => setActiveView('categories')}
           />
         );
       default:
