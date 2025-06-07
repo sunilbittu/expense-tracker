@@ -51,9 +51,6 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
     if (formData.customerId) {
       const selectedCustomer = customers.find(c => c.id === formData.customerId);
       if (selectedCustomer) {
-        console.log('Selected customer:', selectedCustomer);
-        console.log('Customer projectId:', selectedCustomer.projectId);
-        console.log('Available projects:', projects);
         setFormData(prev => ({
           ...prev,
           customerName: selectedCustomer.name,
@@ -177,7 +174,7 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
   };
 
   const getProjectName = (projectId: string) => {
-    const project = projects.find(p => p._id === projectId);
+    const project = projects.find(p => p.id === projectId);
     return project?.name || 'Unknown Project';
   };
 
@@ -367,9 +364,6 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Project */}
             <div>
-              <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-1">
-                Project {formData.projectId && <span className="text-xs text-gray-500">(Auto-selected: {getProjectName(formData.projectId)})</span>}
-              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Building2 size={18} className="text-gray-400" />
@@ -389,20 +383,13 @@ const CustomerPaymentForm: React.FC<CustomerPaymentFormProps> = ({ paymentId, on
                 >
                   <option value="">Select a project</option>
                   {projects.map(project => (
-                    <option key={project._id} value={project._id}>
+                    <option key={project.id} value={project.id}>
                       {project.name}
                     </option>
                   ))}
                 </select>
               </div>
-              {/* Debug info */}
-              {formData.projectId && (
-                <div className="mt-1 text-xs text-gray-500">
-                  Debug - Form projectId: {formData.projectId}
-                </div>
-              )}
             </div>
-
             {/* Plot Number */}
             <div>
               <label htmlFor="plotNumber" className="block text-sm font-medium text-gray-700 mb-1">

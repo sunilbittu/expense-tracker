@@ -463,7 +463,6 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateProject = async (id: string, project: Omit<Project, '_id'>) => {
-    console.log('ExpenseContext updateProject called with ID:', id, 'and project data:', project);
     try {
       const response = await projectsApi.update(id, project);
       setProjects(prev => prev.map(proj => 
@@ -480,7 +479,6 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteProject = async (id: string) => {
-    console.log('ExpenseContext deleteProject called with ID:', id);
     // Check if there are expenses with this project
     const hasExpenses = expenses.some(expense => expense.projectId === id);
     

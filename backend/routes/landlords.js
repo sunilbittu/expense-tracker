@@ -200,14 +200,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
       notes
     } = req.body;
 
-    console.log(req.body);
     // Find landlord
     const landlord = await Landlord.findOne({
       _id: req.params.id,
       user: req.user.userId
     });
 
-    console.log(landlord);
     if (!landlord) {
       return res.status(404).json({ message: 'Landlord not found' });
     }
