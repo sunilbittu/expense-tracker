@@ -233,7 +233,7 @@ const Layout: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <main className="p-4 md:p-8 max-w-6xl mx-auto">
           {renderActiveView()}
         </main>

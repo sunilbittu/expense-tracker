@@ -222,7 +222,7 @@ const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) =>
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center">
             <TrendingUp className="mr-3 text-green-600" size={28} />
-            Income Management
+            Investment Management
           </h1>
           <p className="text-gray-600 mt-1">
             Track and manage all income sources and payments
@@ -427,12 +427,6 @@ const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) =>
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('source')}
-                  >
-                    Source {sortBy === 'source' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('payee')}
                   >
                     Payee {sortBy === 'payee' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -472,12 +466,6 @@ const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) =>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-lg font-semibold text-green-600">
                         {formatCurrency(income.amount)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 flex items-center">
-                        <Building2 size={12} className="mr-1" />
-                        {income.source}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
