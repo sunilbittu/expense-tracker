@@ -12,7 +12,7 @@ import {
   Phone,
   Mail,
   MapPin,
-  DollarSign,
+  IndianRupee,
   Landmark,
   Calculator,
   Printer,
@@ -303,7 +303,7 @@ const LandlordList: React.FC<LandlordListProps> = ({ onEditLandlord, onAddLandlo
                 {formatCurrency(totalLandValue)}
               </p>
             </div>
-            <DollarSign className="text-green-600" size={24} />
+            <IndianRupee className="text-green-600" size={24} />
           </div>
         </div>
 

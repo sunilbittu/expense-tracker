@@ -467,7 +467,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const response = await projectsApi.update(id, project);
       setProjects(prev => prev.map(proj => 
-        proj._id === id ? response.project : proj
+        proj.id === id ? response.project : proj
       ));
       toast.success('Project updated successfully');
       // Refresh projects list to ensure consistency
@@ -490,7 +490,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     try {
       await projectsApi.delete(id);
-      setProjects(prev => prev.filter(project => project._id !== id));
+      setProjects(prev => prev.filter(project => project.id !== id));
       toast.success('Project deleted successfully');
       // Refresh projects list to ensure consistency
       await refreshProjects();
@@ -502,7 +502,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const getProjectById = (id: string) => {
-    return projects.find((project) => project._id === id);
+    return projects.find((project) => project.id === id);
   };
 
   const getCategoryById = (id: string) => {

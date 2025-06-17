@@ -6,9 +6,7 @@ import {
   Edit, 
   Trash2, 
   Search, 
-  Filter, 
   TrendingDown, 
-  DollarSign, 
   Calendar,
   Tag,
   FileText,
@@ -63,7 +61,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense, onAddExpense }
 
   // Payment modes
   const paymentModes = [
-    { id: 'cash', name: 'Cash', icon: <DollarSign size={16} className="text-green-600" /> },
+    { id: 'cash', name: 'Cash', icon: <IndianRupee size={16} className="text-green-600" /> },
     { id: 'online', name: 'Online Transfer', icon: <CreditCard size={16} className="text-blue-600" /> },
     { id: 'cheque', name: 'Cheque', icon: <FileText size={16} className="text-orange-600" /> },
   ];

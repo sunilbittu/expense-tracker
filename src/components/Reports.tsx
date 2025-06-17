@@ -102,17 +102,44 @@ const Reports: React.FC = () => {
           return isInDateRange && matchesProject;
         });
         break;
-      case 'landlords':
-        data = landlords.filter(landlord => {
+      case 'landlords': {
+        // Get landlord records in date range
+        const landlordRecords = landlords.filter(landlord => {
           const date = parseISO(landlord.createdAt);
           const isInDateRange = format(date, 'yyyy-MM-dd') >= start && format(date, 'yyyy-MM-dd') <= end;
           return isInDateRange;
         });
+        // Get all expenses with category 'Site&Construction' and subcategory 'Land Purchase'
+        const siteConstructionCategory = categories.find(c => c.id === 'construction');
+        let landPurchaseExpenses: any[] = [];
+        if (siteConstructionCategory) {
+          const landPurchaseSubcategory = siteConstructionCategory.subcategories.find(s => s.id === 'land');
+          console.log('DEBUG: siteConstructionCategory', siteConstructionCategory);
+          console.log('DEBUG: landPurchaseSubcategory', landPurchaseSubcategory);
+          console.log('DEBUG: expenses', expenses);
+          if (landPurchaseSubcategory) {
+            landPurchaseExpenses = expenses.filter(expense => {
+              const date = parseISO(expense.date);
+              const isInDateRange = format(date, 'yyyy-MM-dd') >= start && format(date, 'yyyy-MM-dd') <= end;
+              return (
+                isInDateRange &&
+                expense.category === siteConstructionCategory.id &&
+                expense.subcategory === landPurchaseSubcategory.id
+              );
+            }).map(expense => ({ ...expense, _isLandPurchaseExpense: true }));
+          }
+        }
+        data = [...landlordRecords, ...landPurchaseExpenses];
         break;
+      }
+    }
+
+    if (reportType === 'landlords') {
+      console.log('Landlords Report filteredData:', data);
     }
 
     return data;
-  }, [reportType, timeRange, projectFilter, categoryFilter, startDate, endDate, expenses, incomes, customerPayments, landlords]);
+  }, [reportType, timeRange, projectFilter, categoryFilter, startDate, endDate, expenses, incomes, customerPayments, landlords, categories]);
 
   const summaryData = useMemo(() => {
     if (reportType === 'expenses') {
@@ -161,12 +188,18 @@ const Reports: React.FC = () => {
         categoryTotals
       };
     } else {
-      console.log(filteredData);
+      // landlords report: now includes both landlord records and land purchase expenses
       const landlordTotals: { [key: string]: number } = {};
       const propertyTotals: { [key: string]: number } = {};
-      filteredData.forEach(landlord => {
-        landlordTotals[landlord.name] = (landlordTotals[landlord.name] || 0) + landlord.amount;
-        propertyTotals[landlord.address] = (propertyTotals[landlord.address] || 0) + landlord.amount;
+      filteredData.forEach(item => {
+        if (item._isLandPurchaseExpense) {
+          const landlordName = landlords.find(l => l.id === item.landlordId)?.name || 'Land Purchase Expenses';
+          landlordTotals[landlordName] = (landlordTotals[landlordName] || 0) + item.amount;
+          propertyTotals[item.description || item.id] = (propertyTotals[item.description || item.id] || 0) + item.amount;
+        } else {
+          landlordTotals[item.name] = (landlordTotals[item.name] || 0) + item.amount;
+          propertyTotals[item.address] = (propertyTotals[item.address] || 0) + item.amount;
+        }
       });
 
       return {
@@ -175,7 +208,7 @@ const Reports: React.FC = () => {
         propertyTotals
       };
     }
-  }, [filteredData, reportType, categories]);
+  }, [filteredData, reportType, categories, landlords]);
 
   console.log(summaryData);
 
@@ -278,7 +311,7 @@ const Reports: React.FC = () => {
 
     const detailsData = filteredData.map(item => {
       const baseData = {
-        Date: format(parseISO(item.date), 'dd/MM/yyyy'),
+        Date: format(parseISO(item._isLandPurchaseExpense ? item.date : item.createdAt), 'dd/MM/yyyy'),
         Amount: item.amount,
       };
 
@@ -570,133 +603,184 @@ const Reports: React.FC = () => {
                 </p>
               </div>
             ))}
-            {Object.entries(summaryData.propertyTotals || {}).map(([property, amount]) => (
-              <div key={property} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-gray-700 font-semibold truncate">{property}</h3>
-                  <span className="p-2 bg-orange-100 rounded-lg">
-                    <Home size={18} className="text-orange-600" />
-                  </span>
-                </div>
-                <p className="text-2xl font-bold text-orange-600">{formatCurrency(amount as number)}</p>
-                <p className="mt-1 text-sm text-gray-500">
-                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
-                </p>
-              </div>
-            ))}
           </>
         )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                {(reportType === 'payments' || reportType === 'landlords') && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {reportType === 'payments' ? 'Customer' : 'Landlord'}
-                  </th>
-                )}
-                {(reportType === 'expenses' || reportType === 'payments' || reportType === 'landlords') && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Project
-                  </th>
-                )}
-                {reportType === 'expenses' && (
-                  <>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Subcategory
-                    </th>
-                  </>
-                )}
-                {reportType === 'income' && (
-                  <>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Payee
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Source
-                    </th>
-                  </>
-                )}
-                {reportType === 'landlords' && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Property Address
-                  </th>
-                )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(parseISO(item.createdAt), 'dd/MM/yyyy')}
-                  </td>
-                  {reportType === 'payments' && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {(item as any).customerName}
-                    </td>
-                  )}
-                  {reportType === 'landlords' && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {item.name}
-                    </td>
-                  )}
-                  {(reportType === 'expenses' || reportType === 'payments' || reportType === 'landlords') && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {projects.find(p => p.id === (item as any).projectId)?.name}
-                    </td>
-                  )}
-                  {reportType === 'landlords' && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {item.address || ''}
-                    </td>
-                  )}
-                  {reportType === 'expenses' && (
-                    <>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {categories.find(c => c.id === (item as any).category)?.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {categories
-                          .find(c => c.id === (item as any).category)
-                          ?.subcategories.find(s => s.id === (item as any).subcategory)?.name}
-                      </td>
-                    </>
-                  )}
-                  {reportType === 'income' && (
-                    <>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {(item as any).payee}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {(item as any).source}
-                      </td>
-                    </>
-                  )}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {reportType === 'landlords' ? (item.status || item.email || '') : (item as any).description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                    {formatCurrency(item.amount)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {reportType === 'landlords'
+            ? (() => {
+                const landlordPayments = filteredData.filter(item => item.amount && item.amount > 0);
+                if (landlordPayments.length === 0) {
+                  return (
+                    <div className="p-6 text-center text-gray-500">No landlord payments found.</div>
+                  );
+                }
+                return (
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Landlord
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Project
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Property Address
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Description
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {landlordPayments.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {format(parseISO(item._isLandPurchaseExpense ? item.date : item.createdAt), 'dd/MM/yyyy')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item._isLandPurchaseExpense
+                              ? (landlords.find(l => l.id === item.landlordId)?.name || 'Land Purchase Expense')
+                              : item.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item._isLandPurchaseExpense ? (projects.find(p => p.id === item.projectId)?.name || '') : (projects.find(p => p.id === (item as any).projectId)?.name)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item._isLandPurchaseExpense ? (item.landDetails || '') : (item.address || '')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item._isLandPurchaseExpense ? (item.description || '') : (item.status || item.email || '')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                            {formatCurrency(item.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                );
+              })()
+            : (
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      {(reportType === 'payments' || reportType === 'landlords') && (
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {reportType === 'payments' ? 'Customer' : 'Landlord'}
+                        </th>
+                      )}
+                      {(reportType === 'expenses' || reportType === 'payments' || reportType === 'landlords') && (
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Project
+                        </th>
+                      )}
+                      {reportType === 'expenses' && (
+                        <>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Subcategory
+                          </th>
+                        </>
+                      )}
+                      {reportType === 'income' && (
+                        <>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Payee
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Source
+                          </th>
+                        </>
+                      )}
+                      {reportType === 'landlords' && (
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Property Address
+                        </th>
+                      )}
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredData.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {format(parseISO(item._isLandPurchaseExpense ? item.date : item.createdAt), 'dd/MM/yyyy')}
+                        </td>
+                        {reportType === 'payments' && (
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {(item as any).customerName}
+                          </td>
+                        )}
+                        {reportType === 'landlords' && (
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item._isLandPurchaseExpense
+                              ? (landlords.find(l => l.id === item.landlordId)?.name || 'Land Purchase Expense')
+                              : item.name}
+                          </td>
+                        )}
+                        {(reportType === 'expenses' || reportType === 'payments' || reportType === 'landlords') && (
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item._isLandPurchaseExpense ? (projects.find(p => p.id === item.projectId)?.name || '') : (projects.find(p => p.id === (item as any).projectId)?.name)}
+                          </td>
+                        )}
+                        {reportType === 'landlords' && (
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item._isLandPurchaseExpense ? (item.landDetails || '') : (item.address || '')}
+                          </td>
+                        )}
+                        {reportType === 'expenses' && (
+                          <>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {categories.find(c => c.id === (item as any).category)?.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {categories
+                                .find(c => c.id === (item as any).category)
+                                ?.subcategories.find(s => s.id === (item as any).subcategory)?.name}
+                            </td>
+                          </>
+                        )}
+                        {reportType === 'income' && (
+                          <>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {(item as any).payee}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {(item as any).source}
+                            </td>
+                          </>
+                        )}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {reportType === 'landlords' ? (item._isLandPurchaseExpense ? (item.description || '') : (item.status || item.email || '')) : (item as any).description}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                          {formatCurrency(item.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
         </div>
       </div>
     </div>

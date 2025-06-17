@@ -6,16 +6,13 @@ import {
   Edit, 
   Trash2, 
   Search, 
-  Filter, 
   TrendingUp, 
-  DollarSign, 
+  IndianRupee, 
   Calendar,
   User,
   FileText,
   CreditCard,
-  IndianRupee,
   Plus,
-  Building2,
   Clock,
   CheckCircle,
   Printer,
@@ -61,7 +58,7 @@ const IncomeList: React.FC<IncomeListProps> = ({ onEditIncome, onAddIncome }) =>
 
   // Payment modes
   const paymentModes = [
-    { id: 'cash', name: 'Cash', icon: <DollarSign size={16} className="text-green-600" /> },
+    { id: 'cash', name: 'Cash', icon: <IndianRupee size={16} className="text-green-600" /> },
     { id: 'online', name: 'Online Transfer', icon: <CreditCard size={16} className="text-blue-600" /> },
     { id: 'cheque', name: 'Cheque', icon: <FileText size={16} className="text-orange-600" /> },
   ];

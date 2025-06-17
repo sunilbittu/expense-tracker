@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 import { Expense, PaymentMode } from '../types';
-import { ArrowLeft, Calendar, DollarSign, CreditCard, Wallet, FileCheck, Users } from 'lucide-react';
+import { ArrowLeft, Calendar, CreditCard, Wallet, FileCheck, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { categoryIcons } from '../data/mockData';
 
@@ -91,7 +91,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
   }, [isLandPurchaseExpense]);
 
   // Auto-set land purchase amount when landlord is selected
-  useEffect(() => {
+ /*  useEffect(() => {
     if (isLandPurchaseExpense && formData.landlordId) {
       const selectedLandlord = landlords.find(landlord => landlord.id === formData.landlordId);
       if (selectedLandlord) {
@@ -102,7 +102,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
         }));
       }
     }
-  }, [formData.landlordId, isLandPurchaseExpense, landlords]);
+  }, [formData.landlordId, isLandPurchaseExpense, landlords]); */
   
   console.log(formData);
   const validateForm = () => {
@@ -152,9 +152,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
     if (isLandPurchaseExpense) {
       if (!formData.landlordId) {
         newErrors.landlordId = 'Landlord is required for land purchase expenses';
-      }
-      if (formData.landPurchaseAmount <= 0) {
-        newErrors.landPurchaseAmount = 'Land purchase amount must be greater than zero';
       }
     }
     
@@ -230,7 +227,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
         ...formData,
         landlordId: value,
         landPurchaseAmount: selectedLandlord?.totalLandPrice || 0,
-        amount: selectedLandlord?.totalLandPrice || formData.amount
+        amount: formData.amount
       });
     } else if (name === 'landPurchaseAmount' && isLandPurchaseExpense) {
       // Update both amount and landPurchaseAmount when manually changing land purchase amount

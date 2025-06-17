@@ -6,13 +6,11 @@ import {
   Edit, 
   Trash2, 
   Search, 
-  Filter, 
   Receipt, 
   Building2, 
   Users, 
   Calendar,
   CreditCard,
-  DollarSign,
   IndianRupee,
   Plus,
   FileText,
@@ -145,7 +143,7 @@ const CustomerPaymentList: React.FC<CustomerPaymentListProps> = ({ onEditPayment
   const getPaymentModeIcon = (mode: string) => {
     switch (mode) {
       case 'cash':
-        return <DollarSign size={16} className="text-green-600" />;
+        return <IndianRupee size={16} className="text-green-600" />;
       case 'online':
         return <CreditCard size={16} className="text-blue-600" />;
       case 'cheque':

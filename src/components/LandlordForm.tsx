@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 import { Landlord } from '../types';
-import { ArrowLeft, User, DollarSign, Phone, Mail, MapPin, Calculator, Landmark } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, Calculator, Landmark } from 'lucide-react';
 
 interface LandlordFormProps {
   landlordId?: string | null;
