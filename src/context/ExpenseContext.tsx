@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { Expense, Project, Category, Income, CustomerPayment, Customer, ExpenseContextType, Employee, Landlord } from '../types';
-import { defaultCategories, defaultProjects } from '../data/mockData';
 import { customers as customersApi, projects as projectsApi, categories as categoriesApi, incomes as incomesApi, landlords as landlordsApi, expenses as expensesApi, employees as employeesApi, customerPayments as customerPaymentsApi } from '../services/api';
 import toast from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
 
@@ -40,6 +39,8 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [landlords, setLandlords] = useState<Landlord[]>([]);
   const [isLoadingLandlords, setIsLoadingLandlords] = useState(false);
+
+  const { isAuthenticated } = useAuth();
 
   // Function to refresh expenses from API
   const refreshExpenses = async () => {
@@ -153,11 +154,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // Load all data from APIs on mount (when user is authenticated)
+  // Load all data from APIs when user is authenticated
   useEffect(() => {
     const loadAllData = async () => {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token || !isAuthenticated) return;
 
       // Load all data in parallel
       await Promise.all([
@@ -173,7 +174,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     loadAllData();
-  }, []);
+  }, [isAuthenticated]);
 
   // Expense CRUD operations using API
   const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {

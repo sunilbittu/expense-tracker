@@ -104,6 +104,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId, onComplete }) => {
     }
   }, [formData.landlordId, isLandPurchaseExpense, landlords]);
   
+  console.log(formData);
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     

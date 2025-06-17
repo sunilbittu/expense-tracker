@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
-import { Download, FileSpreadsheet, Filter, Calendar, Users, Building2, Receipt, Home } from 'lucide-react';
+import { Download, Users, Building2, Receipt, Home } from 'lucide-react';
 import { 
   format, 
   subDays, 
@@ -21,7 +21,7 @@ import {
 import * as XLSX from 'xlsx';
 
 const Reports: React.FC = () => {
-  const { expenses, incomes, customerPayments, projects, categories, employees, landlords } = useExpenses();
+  const { expenses, incomes, customerPayments, projects, categories, landlords } = useExpenses();
   const [reportType, setReportType] = useState('expenses');
   const [timeRange, setTimeRange] = useState('monthly');
   const [projectFilter, setProjectFilter] = useState('');
@@ -104,10 +104,9 @@ const Reports: React.FC = () => {
         break;
       case 'landlords':
         data = landlords.filter(landlord => {
-          const date = parseISO(landlord.date || new Date().toISOString());
+          const date = parseISO(landlord.createdAt);
           const isInDateRange = format(date, 'yyyy-MM-dd') >= start && format(date, 'yyyy-MM-dd') <= end;
-          const matchesProject = !projectFilter || landlord.projectId === projectFilter;
-          return isInDateRange && matchesProject;
+          return isInDateRange;
         });
         break;
     }
@@ -162,11 +161,12 @@ const Reports: React.FC = () => {
         categoryTotals
       };
     } else {
+      console.log(filteredData);
       const landlordTotals: { [key: string]: number } = {};
       const propertyTotals: { [key: string]: number } = {};
       filteredData.forEach(landlord => {
-        landlordTotals[landlord.landlordName] = (landlordTotals[landlord.landlordName] || 0) + landlord.amount;
-        propertyTotals[landlord.propertyAddress] = (propertyTotals[landlord.propertyAddress] || 0) + landlord.amount;
+        landlordTotals[landlord.name] = (landlordTotals[landlord.name] || 0) + landlord.amount;
+        propertyTotals[landlord.address] = (propertyTotals[landlord.address] || 0) + landlord.amount;
       });
 
       return {
@@ -176,6 +176,8 @@ const Reports: React.FC = () => {
       };
     }
   }, [filteredData, reportType, categories]);
+
+  console.log(summaryData);
 
   const downloadReport = () => {
     const workbook = XLSX.utils.book_new();
@@ -194,7 +196,7 @@ const Reports: React.FC = () => {
         reportData.push([
           category,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
 
@@ -206,7 +208,7 @@ const Reports: React.FC = () => {
           category,
           subcategory,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
     } else if (reportType === 'income') {
@@ -216,7 +218,7 @@ const Reports: React.FC = () => {
         reportData.push([
           payee,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
 
@@ -226,7 +228,7 @@ const Reports: React.FC = () => {
         reportData.push([
           source,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
     } else if (reportType === 'payments') {
@@ -236,7 +238,7 @@ const Reports: React.FC = () => {
         reportData.push([
           customer,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
 
@@ -246,7 +248,7 @@ const Reports: React.FC = () => {
         reportData.push([
           category,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
     } else {
@@ -256,7 +258,7 @@ const Reports: React.FC = () => {
         reportData.push([
           landlord,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
 
@@ -266,7 +268,7 @@ const Reports: React.FC = () => {
         reportData.push([
           property,
           formatCurrency(amount as number),
-          `${((amount as number / summaryData.total) * 100).toFixed(2)}%`
+          summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'
         ]);
       });
     }
@@ -283,7 +285,7 @@ const Reports: React.FC = () => {
       if (reportType === 'expenses') {
         return {
           ...baseData,
-          Project: projects.find(p => p._id === (item as any).projectId)?.name || '',
+          Project: projects.find(p => p.id === (item as any).projectId)?.name || '',
           Category: categories.find(c => c.id === (item as any).category)?.name || '',
           Subcategory: categories
             .find(c => c.id === (item as any).category)
@@ -303,7 +305,7 @@ const Reports: React.FC = () => {
         return {
           ...baseData,
           Customer: (item as any).customerName,
-          Project: projects.find(p => p._id === (item as any).projectId)?.name || '',
+          Project: projects.find(p => p.id === (item as any).projectId)?.name || '',
           'Plot Number': (item as any).plotNumber,
           'Payment Category': (item as any).paymentCategory,
           'Total Price': (item as any).totalPrice,
@@ -312,7 +314,7 @@ const Reports: React.FC = () => {
         return {
           ...baseData,
           Landlord: (item as any).landlordName,
-          Project: projects.find(p => p._id === (item as any).projectId)?.name || '',
+          Project: projects.find(p => p.id === (item as any).projectId)?.name || '',
           'Property Address': (item as any).propertyAddress,
           'Rent Type': (item as any).rentType,
           Description: item.description,
@@ -411,7 +413,7 @@ const Reports: React.FC = () => {
             </>
           )}
 
-          {(reportType === 'expenses' || reportType === 'payments' || reportType === 'landlords') && (
+          {(reportType === 'expenses' || reportType === 'payments') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Project
@@ -421,9 +423,9 @@ const Reports: React.FC = () => {
                 onChange={(e) => setProjectFilter(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">All Projects</option>
+                <option value="1">All Projects</option>
                 {projects.map((project) => (
-                  <option key={project._id} value={project._id}>
+                  <option key={project.id} value={project.id}>
                     {project.name}
                   </option>
                 ))}
@@ -469,7 +471,7 @@ const Reports: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {reportType === 'expenses' && (
           <>
-            {Object.entries(summaryData.categoryTotals).map(([category, amount]) => (
+            {Object.entries(summaryData.categoryTotals || {}).map(([category, amount]) => (
               <div key={category} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-gray-700 font-semibold">{category}</h3>
@@ -479,7 +481,7 @@ const Reports: React.FC = () => {
                 </div>
                 <p className="text-2xl font-bold text-gray-800">{formatCurrency(amount as number)}</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
                 </p>
               </div>
             ))}
@@ -488,7 +490,7 @@ const Reports: React.FC = () => {
 
         {reportType === 'income' && (
           <>
-            {Object.entries(summaryData.payeeTotals).map(([payee, amount]) => (
+            {Object.entries(summaryData.payeeTotals || {}).map(([payee, amount]) => (
               <div key={payee} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-gray-700 font-semibold">{payee}</h3>
@@ -498,11 +500,11 @@ const Reports: React.FC = () => {
                 </div>
                 <p className="text-2xl font-bold text-green-600">{formatCurrency(amount as number)}</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
                 </p>
               </div>
             ))}
-            {Object.entries(summaryData.sourceTotals).map(([source, amount]) => (
+            {Object.entries(summaryData.sourceTotals || {}).map(([source, amount]) => (
               <div key={source} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-gray-700 font-semibold">{source}</h3>
@@ -512,7 +514,7 @@ const Reports: React.FC = () => {
                 </div>
                 <p className="text-2xl font-bold text-green-600">{formatCurrency(amount as number)}</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
                 </p>
               </div>
             ))}
@@ -521,7 +523,7 @@ const Reports: React.FC = () => {
 
         {reportType === 'payments' && (
           <>
-            {Object.entries(summaryData.customerTotals).map(([customer, amount]) => (
+            {Object.entries(summaryData.customerTotals || {}).map(([customer, amount]) => (
               <div key={customer} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-gray-700 font-semibold">{customer}</h3>
@@ -531,11 +533,11 @@ const Reports: React.FC = () => {
                 </div>
                 <p className="text-2xl font-bold text-purple-600">{formatCurrency(amount as number)}</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
                 </p>
               </div>
             ))}
-            {Object.entries(summaryData.categoryTotals).map(([category, amount]) => (
+            {Object.entries(summaryData.categoryTotals || {}).map(([category, amount]) => (
               <div key={category} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-gray-700 font-semibold">{category}</h3>
@@ -545,7 +547,7 @@ const Reports: React.FC = () => {
                 </div>
                 <p className="text-2xl font-bold text-purple-600">{formatCurrency(amount as number)}</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
                 </p>
               </div>
             ))}
@@ -554,7 +556,7 @@ const Reports: React.FC = () => {
 
         {reportType === 'landlords' && (
           <>
-            {Object.entries(summaryData.landlordTotals).map(([landlord, amount]) => (
+            {Object.entries(summaryData.landlordTotals || {}).map(([landlord, amount]) => (
               <div key={landlord} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-gray-700 font-semibold">{landlord}</h3>
@@ -564,11 +566,11 @@ const Reports: React.FC = () => {
                 </div>
                 <p className="text-2xl font-bold text-orange-600">{formatCurrency(amount as number)}</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
                 </p>
               </div>
             ))}
-            {Object.entries(summaryData.propertyTotals).map(([property, amount]) => (
+            {Object.entries(summaryData.propertyTotals || {}).map(([property, amount]) => (
               <div key={property} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-gray-700 font-semibold truncate">{property}</h3>
@@ -578,7 +580,7 @@ const Reports: React.FC = () => {
                 </div>
                 <p className="text-2xl font-bold text-orange-600">{formatCurrency(amount as number)}</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {((amount as number / summaryData.total) * 100).toFixed(2)}% of total
+                  {summaryData.total && typeof amount === 'number' ? ((amount as number / summaryData.total) * 100).toFixed(2) : '0.00'}% of total
                 </p>
               </div>
             ))}
@@ -641,16 +643,26 @@ const Reports: React.FC = () => {
               {filteredData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(parseISO(item.date), 'dd/MM/yyyy')}
+                    {format(parseISO(item.createdAt), 'dd/MM/yyyy')}
                   </td>
-                  {(reportType === 'payments' || reportType === 'landlords') && (
+                  {reportType === 'payments' && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {reportType === 'payments' ? (item as any).customerName : (item as any).landlordName}
+                      {(item as any).customerName}
+                    </td>
+                  )}
+                  {reportType === 'landlords' && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {item.name}
                     </td>
                   )}
                   {(reportType === 'expenses' || reportType === 'payments' || reportType === 'landlords') && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {projects.find(p => p._id === (item as any).projectId)?.name}
+                      {projects.find(p => p.id === (item as any).projectId)?.name}
+                    </td>
+                  )}
+                  {reportType === 'landlords' && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {item.address || ''}
                     </td>
                   )}
                   {reportType === 'expenses' && (
@@ -675,13 +687,8 @@ const Reports: React.FC = () => {
                       </td>
                     </>
                   )}
-                  {reportType === 'landlords' && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {(item as any).propertyAddress}
-                    </td>
-                  )}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.description}
+                    {reportType === 'landlords' ? (item.status || item.email || '') : (item as any).description}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
                     {formatCurrency(item.amount)}

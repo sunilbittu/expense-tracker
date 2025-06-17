@@ -192,7 +192,6 @@ const LandlordForm: React.FC<LandlordFormProps> = ({ landlordId, onComplete }) =
                     value={formData.amount}
                     onChange={handleChange}
                     min="0"
-                    step="1000"
                     className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.amount ? 'border-red-500' : 'border-gray-300'
                     }`}
